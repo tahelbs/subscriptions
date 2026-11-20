@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מעקב מנויים</title>
+
+  <!-- הגופן Rubik מ-Google Fonts. בלי אינטרנט הדפדפן פשוט ישתמש בגופן רגיל -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- רץ לפני שהדף מוצג, כדי שהצבע והמראה שבחרת יופיעו מיד (בלי הבהוב של הצבעים הרגילים).
+       app.js עושה את אותו דבר בפונקציה applyAppearance -->
+  <script>
+    // עברית, מימין לשמאל (חשוב כשהדף מוצג בתוך אתר אחר, שקובע בעצמו את תגית <html>)
+    document.documentElement.lang = 'he';
+    document.documentElement.dir = 'rtl';
+    try {
+      const saved = JSON.parse(localStorage.getItem('settings')) || {};
+      // אם האתר שמציג את הדף קבע בהיר או כהה (data-theme), "לפי המכשיר" הולך לפיו
+      const host = document.documentElement.dataset.theme;
+      const systemDark = host === 'dark' || (host !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+      const dark = saved.theme === 'dark' || (saved.theme !== 'light' && systemDark);
+      document.documentElement.dataset.mode = dark ? 'dark' : 'light';
+      document.documentElement.dataset.accent = saved.accent || 'terracotta';
+    } catch (error) {}
+  </script>
+</head>
+<body>
+  <main class="container">
+    <header class="page-header">
+      <!-- הכותרת מתחלפת לברכה עם השם, אם הוא נשמר בהגדרות -->
+      <h1 id="page-title">המנויים שלי</h1>
+      <div class="header-actions">
+        <!-- כפתור המדריך: הסבר איך מוצאים את כל המנויים -->
+        <button id="guide-button" class="pill-button" title="איך מוצאים את כל המנויים">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          מדריך
+        </button>
+        <button id="settings-button" class="icon-button header-button" aria-label="הגדרות אישיות" title="הגדרות">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p class="subtitle">כל החיובים הקבועים במקום אחד</p>
+    </header>
+
+    <!-- מוצג כשיש ברשימה נתוני דוגמה -->
+    <div id="example-banner" class="example-banner" hidden>
+      <span>אלה נתוני דוגמה, כדי לראות איך האפליקציה נראית.</span>
+      <button type="button" id="clear-examples" class="text-button">ניקוי הדוגמה</button>
+    </div>
+
+    <!-- כרטיס הסיכום בראש המסך -->
+    <section class="hero" aria-label="סיכום הוצאות">
+      <span class="hero-label">הוצאה חודשית</span>
+      <strong id="monthly-total" class="hero-amount">0 ₪</strong>
+
+      <!-- התקציב החודשי. מוצג רק אם הוגדר תקציב בהגדרות -->
+      <div id="budget" class="budget" hidden>
+        <div class="budget-bar" aria-hidden="true"><div id="budget-fill" class="budget-fill"></div></div>
+        <span id="budget-text" class="budget-text"></span>
+      </div>
+
+      <div class="hero-details">
+        <span>בשנה: <strong id="yearly-total">0 ₪</strong></span>
+        <span id="subscription-count">אין מנויים</span>
+      </div>
+
+      <!-- פירוט ההוצאה: כל מנוי, מתי הוא מחויב וכמה. נפתח בלחיצה -->
+      <details id="breakdown" class="breakdown" hidden>
+        <summary>
+          <span>פירוט לפי מנוי</span>
+          <svg class="breakdown-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div id="breakdown-body" class="breakdown-body"></div>
+      </details>
+    </section>
+
+    <!-- תזכורת מראש לחידושים שנתיים. מוצגת כשחידוש מתקרב ועוד לא החלטת לחדש -->
+    <section id="renewal-alert" class="renewal-alert" aria-labelledby="renewal-alert-title" hidden>
+      <span class="renewal-alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </span>
+      <div class="renewal-alert-body">
+        <h2 id="renewal-alert-title" class="renewal-alert-title">חידוש שנתי מתקרב</h2>
+        <ul id="renewal-alert-list" class="renewal-alert-list"></ul>
+        <button type="button" id="renewal-alert-button" class="text-button">לחידושים השנתיים</button>
+      </div>
+    </section>
+
+    <!-- תזכורת לחיובים קרובים. מוסתרת כשאין חיובים בימים הקרובים -->
+    <section id="upcoming" class="upcoming" hidden>
+      <div class="upcoming-header">
+        <span class="upcoming-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </span>
+        <h2 id="upcoming-title" class="upcoming-title">חיובים ב-7 הימים הקרובים</h2>
+      </div>
+      <ul id="upcoming-list" class="upcoming-list"></ul>
+      <p class="upcoming-total">סה"כ <strong id="upcoming-total"></strong></p>
+    </section>
+
+    <button id="add-button" class="button primary full">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      הוספת מנוי
+    </button>
+
+    <!-- כפתורי סינון לפי קטגוריה. JavaScript יוצר אותם לפי הקטגוריות שקיימות -->
+    <div id="category-filter" class="filter" role="group" aria-label="סינון לפי קטגוריה" hidden></div>
+
+    <!-- רשימת המנויים. JavaScript ממלא אותה -->
+    <ul id="subscription-list" class="list"></ul>
+
+    <!-- חידושים שנתיים: כל מה שמתחדש פעם בשנה, במקום אחד -->
+    <section id="renewals" class="renewals" aria-labelledby="renewals-title" hidden>
+      <div class="section-head">
+        <h2 id="renewals-title" class="section-title">חידושים שנתיים</h2>
+        <span id="renewals-total" class="section-meta"></span>
+      </div>
+      <p class="section-text">כל מה שמתחדש פעם בשנה, מהקרוב לרחוק. אפשר לסמן מראש אם לחדש או לבטל.</p>
+      <ul id="renewals-list" class="renewals-list"></ul>
+    </section>
+
+    <!-- מה שמוצג כשאין עדיין מנויים -->
+    <div id="empty-message" class="empty">
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 2-2 2 2 3-2 3 2V2l-3 2-3-2-2 2-2-2-3 2Z"/><path d="M8 9h8M8 13h5"/></svg>
+      </div>
+      <p class="empty-title">עדיין אין מנויים</p>
+      <p class="empty-text">לחץ על "הוספת מנוי" כדי להוסיף את הראשון</p>
+      <button id="empty-guide-button" class="button empty-guide-button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        איך מוצאים את כל המנויים שלי?
+      </button>
+      <button type="button" id="load-examples" class="text-button empty-example-button">או: הצגת נתוני דוגמה</button>
+    </div>
+
+    <!-- תובנות על ההוצאות. מוצג כשיש לפחות שני מנויים -->
+    <section id="insights" class="insights" aria-labelledby="insights-title" hidden>
+      <h2 id="insights-title" class="section-title">תובנות</h2>
+      <ul id="insights-list" class="insights-list"></ul>
+    </section>
+
+    <!-- הצעות לחיסכון, ומחשבון "מה אם אבטל?" -->
+    <section id="savings" class="savings" aria-labelledby="savings-title" hidden>
+      <h2 id="savings-title" class="section-title">הצעות לחיסכון</h2>
+      <ul id="savings-list" class="insights-list"></ul>
+
+      <div class="whatif">
+        <h3 class="whatif-title">מה אם אבטל?</h3>
+        <p class="whatif-text">מסמנים מנויים, ורואים מיד כמה תחסוך ומה תהיה ההוצאה החודשית בלעדיהם.</p>
+        <ul id="whatif-list" class="whatif-list"></ul>
+        <div id="whatif-result" class="whatif-result" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- גיבוי: שמירת הנתונים לקובץ וטעינה שלהם בחזרה -->
+    <section class="backup" aria-labelledby="backup-title">
+      <h2 id="backup-title" class="backup-title">גיבוי</h2>
+      <p class="backup-text">
+        הנתונים נשמרים רק בדפדפן הזה. כדאי לשמור מדי פעם קובץ גיבוי.
+        אפשר גם לטעון אותו בדפדפן או במחשב אחר.
+      </p>
+      <div class="backup-actions">
+        <button id="export-button" class="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+          ייצוא לקובץ
+        </button>
+        <button id="import-button" class="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+          ייבוא מקובץ
+        </button>
+      </div>
+      <!-- שדה בחירת קובץ מוסתר. כפתור "ייבוא מקובץ" פותח אותו -->
+      <input type="file" id="import-input" accept=".json,application/json" hidden>
+    </section>
+  </main>
+
+  <!-- תבנית של כרטיס מנוי אחד. JavaScript משכפל אותה לכל מנוי -->
+  <template id="card-template">
+    <li class="card">
+      <div class="avatar" aria-hidden="true"></div>
+      <div class="card-heading">
+        <h2 class="card-name"></h2>
+        <span class="tag card-category"></span>
+      </div>
+      <div class="card-price">
+        <span class="card-amount"></span>
+        <span class="card-frequency"></span>
+      </div>
+      <div class="card-date"></div>
+      <div class="card-actions">
+        <button class="icon-button edit-button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        <button class="icon-button danger delete-button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+      <p class="card-notes"></p>
+    </li>
+  </template>
+
+  <!-- חלון הטופס: משמש גם להוספה וגם לעריכה. בטלפון הוא עולה מלמטה -->
+  <dialog id="form-dialog">
+    <form id="subscription-form">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h2 id="form-title">הוספת מנוי</h2>
+
+      <label class="field">
+        <span>שם</span>
+        <input type="text" name="name" required placeholder="לדוגמה: Netflix">
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>מחיר</span>
+          <span class="input-wrap">
+            <input type="number" name="price" required min="0.01" step="0.01" inputmode="decimal" placeholder="0">
+            <span class="input-suffix" aria-hidden="true">₪</span>
+          </span>
+        </label>
+
+        <label class="field">
+          <span>תאריך החיוב הבא</span>
+          <input type="date" name="nextDate" required>
+        </label>
+      </div>
+
+      <!-- בחירת תדירות: שני כפתורי רדיו שנראים כמו מתג -->
+      <fieldset class="field">
+        <legend>תדירות</legend>
+        <div class="segmented compact">
+          <label><input type="radio" name="frequency" value="weekly" required><span>שבועי</span></label>
+          <label><input type="radio" name="frequency" value="monthly" checked><span>חודשי</span></label>
+          <label><input type="radio" name="frequency" value="bimonthly"><span>דו-חודשי</span></label>
+          <label><input type="radio" name="frequency" value="quarterly"><span>רבעוני</span></label>
+          <label><input type="radio" name="frequency" value="yearly"><span>שנתי</span></label>
+        </div>
+      </fieldset>
+
+      <!-- מופיע רק במנוי שנתי. למשל אחרי מבצע, כשהחידוש יהיה במחיר הרגיל -->
+      <label class="field" id="renewal-price-field" hidden>
+        <span>מחיר בחידוש <small>(אם שונה, למשל אחרי מבצע)</small></span>
+        <span class="input-wrap">
+          <input type="number" name="renewalPrice" min="0" step="0.01" inputmode="decimal" placeholder="אותו מחיר">
+          <span class="input-suffix" aria-hidden="true">₪</span>
+        </span>
+      </label>
+
+      <label class="field">
+        <span>קטגוריה <small>(לא חובה)</small></span>
+        <input type="text" name="category" list="category-options" placeholder="בחר או הקלד">
+        <!-- ההצעות כאן הן הקטגוריות שלך מההגדרות. JavaScript ממלא אותן -->
+        <datalist id="category-options"></datalist>
+      </label>
+
+      <!-- בחירת אייקון. JavaScript יוצר את האפשרויות מתוך הרשימה ICONS -->
+      <fieldset class="field">
+        <legend>אייקון <small>(לא חובה)</small></legend>
+        <div id="icon-picker" class="icon-picker"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>כמה אתה משתמש בזה?</legend>
+        <div class="segmented">
+          <label><input type="radio" name="usage" value="used" checked><span>משתמש</span></label>
+          <label><input type="radio" name="usage" value="rarely"><span>כמעט לא</span></label>
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span>הערות <small>(לא חובה)</small></span>
+        <textarea name="notes" rows="2"></textarea>
+      </label>
+
+      <div class="form-actions">
+        <button type="submit" class="button primary">שמירה</button>
+        <button type="button" id="cancel-button" class="button">ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===== המדריך: איך מוצאים את כל המנויים =====
+       כל שלב הוא <details>, כלומר כותרת שלוחצים עליה כדי לפתוח את ההסבר.
+       data-step הוא שם קבוע לשלב. לפיו JavaScript זוכר אילו שלבים סימנת כ"סיימתי" -->
+  <dialog id="guide-dialog" class="guide-dialog" aria-labelledby="guide-title">
+    <div class="dialog-body">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h2 id="guide-title">איך מוצאים את כל המנויים?</h2>
+      <p class="guide-intro">
+        רוב החיובים הקבועים מסתתרים בכמה מקומות קבועים. כדאי לעבור עליהם לפי הסדר,
+        ולהוסיף לאפליקציה כל חיוב שחוזר על עצמו. אחרי כל שלב אפשר לסמן "סיימתי".
+      </p>
+
+      <div class="guide-progress">
+        <div class="guide-progress-row">
+          <span id="guide-progress-text">סיימת 0 מתוך 7 שלבים</span>
+          <button type="button" id="guide-reset" class="text-button" hidden>התחלה מחדש</button>
+        </div>
+        <div class="guide-progress-bar" aria-hidden="true"><div id="guide-progress-fill"></div></div>
+      </div>
+
+      <ol class="guide-steps">
+        <li>
+          <details class="guide-step" data-step="card">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>פירוט כרטיס האשראי</strong>
+                <small>הכי חשוב. כאן נמצאים רוב המנויים</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>נכנסים לאפליקציה או לאתר של חברת האשראי (למשל ישראכרט, כאל או מקס), או לאפליקציה של הבנק, למסך של <b>פירוט העסקאות</b>.</li>
+                <li>עוברים על <b>3 החודשים האחרונים</b>. מנוי חודשי יופיע בכל חודש, עם אותו שם עסק ובערך אותו סכום.</li>
+                <li>לפעמים חיובים כאלה מסומנים בפירוט כ<b>"הוראת קבע"</b> או כ<b>"עסקה חוזרת"</b>.</li>
+                <li>שם העסק בפירוט לא תמיד זהה לשם השירות. למשל, מנוי שנקנה דרך Apple יופיע כ-<span class="path" dir="ltr">APPLE.COM/BILL</span>, ודרך PayPal כ-<span class="path" dir="ltr">PAYPAL *</span> ואחריו שם העסק.</li>
+                <li>יש לך יותר מכרטיס אחד? עוברים על כל כרטיס בנפרד.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="yearly">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>חיובים שנתיים</strong>
+                <small>קורים פעם בשנה, ולכן הכי קל לפספס אותם</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>באותו פירוט אשראי, מסתכלים אחורה על <b>12 החודשים האחרונים</b>.</li>
+                <li>מחפשים חיובים חד-פעמיים שמוכרים לך מהשנה שעברה: ביטוח רכב או דירה, אנטי-וירוס, אחסון בענן, דומיין לאתר, מנוי לעיתון, דמי כרטיס אשראי.</li>
+                <li>טיפ: אם אפשר לייצא את הפירוט ל-Excel, קל יותר למיין לפי שם בית העסק ולראות מה חוזר.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="bank">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2l8 5H4z"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>חשבון הבנק</strong>
+                <small>חיובים שיורדים ישר מהחשבון, לא דרך האשראי</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>באפליקציה או באתר של הבנק מחפשים את המסך <b>"הוראות קבע"</b> או <b>"הרשאות לחיוב חשבון"</b>.</li>
+                <li>שם מופיעים חיובים כמו ביטוחים, ועד בית, קופת חולים, חוגים ותרומות.</li>
+                <li>כדאי לעבור גם על <b>תנועות העו"ש</b> של החודש האחרון, ולחפש חיובים שחוזרים כל חודש.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="phone">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>מינויים בטלפון</strong>
+                <small>אפליקציות שנרשמת אליהן דרך iPhone או Android</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li><b>ב-iPhone:</b> <span class="path">הגדרות ← השם שלך ← מינויים</span></li>
+                <li><b>ב-Android:</b> פותחים את Google Play ← לוחצים על תמונת הפרופיל ← <span class="path">תשלומים ומינויים ← מינויים</span></li>
+                <li>שם רואים את כל המנויים הפעילים, כמה הם עולים ומתי החיוב הבא. זה המקום הכי נוח להעתיק ממנו את הפרטים.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="paypal">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>PayPal ושירותי תשלום</strong>
+                <small>תשלומים אוטומטיים לאתרים בחו"ל</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>ב-PayPal נכנסים להגדרות, ומחפשים את <b>ניהול התשלומים האוטומטיים</b> (Automatic payments). שם מופיע כל אתר שמחייב אותך באופן קבוע.</li>
+                <li>יש לך חשבון ב-Amazon? כדאי לבדוק בחשבון אם יש מנויים פעילים, כמו Amazon Prime.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="cellular">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>חשבונות הבית</strong>
+                <small>סלולר, אינטרנט, טלוויזיה, חשמל ומים</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>גם חשבונות קבועים הם חלק מההוצאה החודשית. אפשר להוסיף אותם כמנויים, עם הסכום הממוצע.</li>
+                <li>בחשבונית של חברת הסלולר כדאי לחפש <b>"שירותי תוכן"</b> או <b>"חיובי צד ג'"</b>. לפעמים יש שם מנויים שנרשמו בלי ששמת לב.</li>
+                <li>חשבון שמגיע כל חודשיים (כמו חשמל או מים)? בוחרים בתדירות <b>"דו-חודשי"</b>, ומכניסים את הסכום הממוצע של חשבון.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+
+        <li>
+          <details class="guide-step" data-step="email">
+            <summary>
+              <span class="step-icon" aria-hidden="true">
+                <svg class="step-icon-main" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+                <svg class="step-icon-done" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span class="step-title">
+                <strong>חיפוש במייל</strong>
+                <small>קבלות, חידושים ותקופות ניסיון</small>
+              </span>
+              <svg class="step-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <div class="guide-step-body">
+              <ul>
+                <li>בתיבת המייל מחפשים מילים כמו:
+                  <span class="path">מנוי</span> <span class="path">חידוש</span> <span class="path">קבלה</span>
+                  <span class="path">חשבונית</span> <span class="path" dir="ltr">subscription</span>
+                  <span class="path" dir="ltr">renewal</span> <span class="path" dir="ltr">receipt</span>
+                </li>
+                <li>ככה מוצאים גם <b>תקופות ניסיון חינמיות</b> שעומדות להפוך לתשלום. כדאי להוסיף אותן עם תאריך סוף הניסיון, כדי לקבל תזכורת לפני החיוב.</li>
+              </ul>
+              <label class="step-done"><input type="checkbox"> סיימתי את השלב הזה</label>
+            </div>
+          </details>
+        </li>
+      </ol>
+
+      <!-- טיפים להכנסת מנוי לאפליקציה -->
+      <section class="guide-tips" aria-labelledby="guide-tips-title">
+        <h3 id="guide-tips-title">איך מכניסים חיוב לאפליקציה</h3>
+        <ul>
+          <li><b>שם:</b> השם שאתה מכיר, גם אם בפירוט כתוב משהו אחר.</li>
+          <li><b>מחיר:</b> הסכום בשקלים שירד בפועל. חיוב בדולרים? לוקחים את הסכום בשקלים מפירוט האשראי.</li>
+          <li><b>תאריך החיוב הבא:</b> אפשר פשוט להכניס את התאריך של החיוב האחרון. האפליקציה תקדם אותו לבד בחודש או בשנה.</li>
+          <li><b>לא בטוח שאתה עוד משתמש בזה?</b> סמן "כמעט לא", ובתובנות תראה כמה זה עולה לך בשנה.</li>
+        </ul>
+      </section>
+
+      <div class="form-actions">
+        <button type="button" id="guide-add-button" class="button primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          הוספת מנוי
+        </button>
+        <button type="button" id="guide-close" class="button">סגירה</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- חלון ההגדרות האישיות. שינויים בצבע ובמראה מוצגים מיד, ונשמרים רק בלחיצה על "שמירה" -->
+  <dialog id="settings-dialog">
+    <form id="settings-form">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h2>הגדרות אישיות</h2>
+
+      <label class="field">
+        <span>איך לקרוא לך? <small>(לא חובה)</small></span>
+        <input type="text" name="userName" maxlength="30" autocomplete="given-name" placeholder="השם שלך">
+      </label>
+
+      <!-- בחירת צבע: כפתורי רדיו שנראים כמו עיגולי צבע -->
+      <fieldset class="field">
+        <legend>צבע האתר</legend>
+        <div class="swatches">
+          <label class="swatch">
+            <input type="radio" name="accent" value="terracotta">
+            <span class="swatch-color" data-color="terracotta"></span>
+            <span class="swatch-name">טרקוטה</span>
+          </label>
+          <label class="swatch">
+            <input type="radio" name="accent" value="sage">
+            <span class="swatch-color" data-color="sage"></span>
+            <span class="swatch-name">מרווה</span>
+          </label>
+          <label class="swatch">
+            <input type="radio" name="accent" value="ocean">
+            <span class="swatch-color" data-color="ocean"></span>
+            <span class="swatch-name">ים</span>
+          </label>
+          <label class="swatch">
+            <input type="radio" name="accent" value="plum">
+            <span class="swatch-color" data-color="plum"></span>
+            <span class="swatch-name">שזיף</span>
+          </label>
+          <label class="swatch">
+            <input type="radio" name="accent" value="rose">
+            <span class="swatch-color" data-color="rose"></span>
+            <span class="swatch-name">ורד</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>מראה</legend>
+        <div class="segmented">
+          <label><input type="radio" name="theme" value="auto"><span>לפי המכשיר</span></label>
+          <label><input type="radio" name="theme" value="light"><span>בהיר</span></label>
+          <label><input type="radio" name="theme" value="dark"><span>כהה</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>תזכורת לחיובים קרובים</legend>
+        <div class="segmented">
+          <label><input type="radio" name="upcomingDays" value="3"><span>3 ימים</span></label>
+          <label><input type="radio" name="upcomingDays" value="7"><span>שבוע</span></label>
+          <label><input type="radio" name="upcomingDays" value="14"><span>שבועיים</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>תזכורת לפני חידוש שנתי</legend>
+        <div class="segmented">
+          <label><input type="radio" name="renewalNotice" value="14"><span>שבועיים</span></label>
+          <label><input type="radio" name="renewalNotice" value="30"><span>חודש</span></label>
+          <label><input type="radio" name="renewalNotice" value="60"><span>חודשיים</span></label>
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span>תקציב חודשי למנויים <small>(לא חובה)</small></span>
+        <span class="input-wrap">
+          <input type="number" name="budget" min="0" step="1" inputmode="numeric" placeholder="ללא תקציב">
+          <span class="input-suffix" aria-hidden="true">₪</span>
+        </span>
+      </label>
+
+      <!-- ניהול קטגוריות: JavaScript מצייר שורה לכל קטגוריה, עם בחירת צבע ומחיקה -->
+      <fieldset class="field">
+        <legend>הקטגוריות שלי</legend>
+        <ul id="category-editor" class="category-editor"></ul>
+        <div class="category-add">
+          <input type="text" id="new-category" maxlength="20" placeholder="קטגוריה חדשה" aria-label="שם לקטגוריה חדשה">
+          <button type="button" id="add-category-button" class="button">הוספה</button>
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <button type="submit" class="button primary">שמירה</button>
+        <button type="button" id="settings-cancel" class="button">ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- חלון אישור (למשל לפני מחיקה). מחליף את confirm() של הדפדפן -->
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-message">
+    <div class="dialog-body">
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="form-actions">
+        <button type="button" id="confirm-yes" class="button primary">אישור</button>
+        <button type="button" id="confirm-no" class="button">ביטול</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ייצוא גיבוי: הטקסט של הגיבוי, עם העתקה או הורדה כקובץ -->
+  <dialog id="export-dialog" aria-labelledby="export-title">
+    <div class="dialog-body">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h2 id="export-title">ייצוא גיבוי</h2>
+      <p class="dialog-text">
+        זה כל המידע שלך: המנויים וההגדרות. אפשר להעתיק את הטקסט ולשמור אותו במקום בטוח
+        (למשל בהערה בטלפון או במייל לעצמך), או להוריד אותו כקובץ.
+      </p>
+      <textarea id="export-text" class="code-box" rows="8" readonly aria-label="טקסט הגיבוי"></textarea>
+      <div class="form-actions">
+        <button type="button" id="copy-backup" class="button primary">העתקה</button>
+        <button type="button" id="download-backup" class="button">הורדה</button>
+        <button type="button" id="close-export" class="button">סגירה</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ייבוא גיבוי: מקובץ, או מטקסט שמדביקים -->
+  <dialog id="import-dialog" aria-labelledby="import-title">
+    <div class="dialog-body">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h2 id="import-title">ייבוא גיבוי</h2>
+      <p class="dialog-text">הייבוא מחליף את המנויים וההגדרות שיש עכשיו במה שיש בגיבוי.</p>
+      <button type="button" id="choose-file" class="button choose-file-button">בחירת קובץ גיבוי</button>
+      <p class="or-divider">או</p>
+      <textarea id="import-text" class="code-box" rows="6" placeholder="הדבקת טקסט הגיבוי כאן" aria-label="טקסט גיבוי לייבוא"></textarea>
+      <div class="form-actions">
+        <button type="button" id="import-from-text" class="button primary">ייבוא מהטקסט</button>
+        <button type="button" id="close-import" class="button">ביטול</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- הודעה קצרה שמופיעה לכמה שניות בתחתית המסך. מחליפה את alert() של הדפדפן -->
+  <div id="toast" class="toast" popover="manual" role="status" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

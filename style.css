@@ -1,0 +1,1972 @@
+/* ===== צבעים ומשתנים כלליים ===== */
+/* כל הצבעים מוגדרים כאן, בשלוש שכבות:
+   1. הצבעים הרגילים (מצב בהיר) ב-:root
+   2. מצב כהה: [data-mode="dark"]
+   3. צבע האתר שבוחרים בהגדרות: [data-accent="..."]
+   JavaScript שם את data-mode ואת data-accent על התגית <html> */
+:root {
+  color-scheme: light;
+
+  --bg: #fbf6ef;            /* רקע הדף: קרם חם */
+  --surface: #ffffff;       /* רקע של כרטיסים */
+  --surface-soft: #f4ece2;  /* רקע עדין למתגים ולכפתורים */
+  --text: #2b2420;
+  --muted: #75675c;
+  --border: #ece0d2;
+  --danger: #b42318;
+  --danger-text: #ffffff;   /* טקסט על כפתור מחיקה */
+  --warm-bg: #fff3dd;       /* רקע תיבת התזכורת */
+  --warm-border: #f1d9a9;
+  --warm-icon-bg: #f8d58f;
+  --warm-icon: #7a4b00;
+  --shadow: 0 1px 2px rgba(90, 55, 30, 0.06), 0 6px 20px rgba(90, 55, 30, 0.07);
+  --radius: 20px;
+  --radius-sm: 12px;
+
+  /* צבע האתר. ברירת המחדל: טרקוטה */
+  --primary: #c4492f;
+  --primary-hover: #a83c26;
+  --primary-text: #ffffff;
+  --hero-from: #b0412a;
+  --hero-to: #9b3624;
+  --focus: var(--primary);
+}
+
+:root[data-mode="dark"] {
+  color-scheme: dark;
+
+  --bg: #1b1613;
+  --surface: #26201c;
+  --surface-soft: #322a24;
+  --text: #f4ece4;
+  --muted: #b9aa9c;
+  --border: #3b312a;
+  --danger: #f2836f;
+  --danger-text: #2a0d08;
+  --warm-bg: #2c2317;
+  --warm-border: #4a3a20;
+  --warm-icon-bg: #5c4520;
+  --warm-icon: #f8d58f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+
+  --primary: #f08a6a;
+  --primary-hover: #f4a185;
+  --primary-text: #2a140c;
+}
+
+/* ===== צבעי האתר לבחירה ===== */
+/* לכל צבע: גרסה למצב בהיר, וגרסה בהירה יותר למצב כהה */
+:root[data-accent="sage"] {
+  --primary: #3d7a55;
+  --primary-hover: #2f6343;
+  --hero-from: #397050;
+  --hero-to: #2c5e40;
+}
+:root[data-mode="dark"][data-accent="sage"] {
+  --primary: #8fcfa6;
+  --primary-hover: #a8dcbb;
+  --primary-text: #0f2a1a;
+}
+
+:root[data-accent="ocean"] {
+  --primary: #2f6db0;
+  --primary-hover: #255a93;
+  --hero-from: #2c66a6;
+  --hero-to: #24548a;
+}
+:root[data-mode="dark"][data-accent="ocean"] {
+  --primary: #8bb8ea;
+  --primary-hover: #a6c9f0;
+  --primary-text: #0d2238;
+}
+
+:root[data-accent="plum"] {
+  --primary: #7a4bb0;
+  --primary-hover: #643a96;
+  --hero-from: #7c4db3;
+  --hero-to: #5b3488;
+}
+:root[data-mode="dark"][data-accent="plum"] {
+  --primary: #c4a5ef;
+  --primary-hover: #d3bbf4;
+  --primary-text: #24133d;
+}
+
+:root[data-accent="rose"] {
+  --primary: #b83c6a;
+  --primary-hover: #9a2f57;
+  --hero-from: #ad3f68;
+  --hero-to: #8c2c52;
+}
+:root[data-mode="dark"][data-accent="rose"] {
+  --primary: #f09bbb;
+  --primary-hover: #f4b3cb;
+  --primary-text: #3a0f20;
+}
+
+/* ===== צבעים לקטגוריות ===== */
+/* כל קטגוריה מקבלת אחד מהגוונים האלה. בוחרים אותו בהגדרות */
+.tone-0    { --tone-bg: #fde3d6; --tone-fg: #9a3b1f; } /* אפרסק */
+.tone-1    { --tone-bg: #fcebc4; --tone-fg: #7d4e00; } /* ענבר */
+.tone-2    { --tone-bg: #dcefdc; --tone-fg: #2f6b3a; } /* מרווה */
+.tone-3    { --tone-bg: #dceaf7; --tone-fg: #285a8a; } /* תכלת */
+.tone-4    { --tone-bg: #ebe2f7; --tone-fg: #5d3f8f; } /* לבנדר */
+.tone-5    { --tone-bg: #f9dde6; --tone-fg: #933556; } /* ורד */
+.tone-none { --tone-bg: #efe7dd; --tone-fg: #6b5d52; } /* בלי קטגוריה */
+
+[data-mode="dark"] .tone-0    { --tone-bg: #4a2a1f; --tone-fg: #f6b9a1; }
+[data-mode="dark"] .tone-1    { --tone-bg: #463619; --tone-fg: #f3cf7e; }
+[data-mode="dark"] .tone-2    { --tone-bg: #23392a; --tone-fg: #a5d6ab; }
+[data-mode="dark"] .tone-3    { --tone-bg: #1f3247; --tone-fg: #a8c9ea; }
+[data-mode="dark"] .tone-4    { --tone-bg: #34294a; --tone-fg: #cdb7ef; }
+[data-mode="dark"] .tone-5    { --tone-bg: #47242f; --tone-fg: #f0aac0; }
+[data-mode="dark"] .tone-none { --tone-bg: #3a302a; --tone-fg: #cdbfb2; }
+
+/* ===== בסיס ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* אלמנט עם המאפיין hidden תמיד מוסתר, גם אם יש לו display אחר ב-CSS */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Rubik", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-block: 24px 40px;
+  /* לפחות 16px בכל צד, ויותר אם יש פס מערכת בצד המסך (בטלפון לרוחב) */
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* מסגרת ברורה סביב מה שנבחר במקלדת (Tab) */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ===== כותרת הדף ===== */
+/* הכותרת היא רשת: בשורה הראשונה הכותרת והכפתורים, בשנייה תת-הכותרת לכל הרוחב */
+.page-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "title    actions"
+    "subtitle subtitle";
+  align-items: center;
+  column-gap: 12px;
+  margin-bottom: 18px;
+}
+
+.page-header h1 {
+  grid-area: title;
+  min-width: 0;
+}
+
+.page-header .header-actions {
+  grid-area: actions;
+}
+
+.page-header .subtitle {
+  grid-area: subtitle;
+}
+
+/* הכפתורים בפינת הכותרת: מדריך והגדרות */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* כפתור מעוגל עם אייקון וטקסט קצר (כפתור המדריך) */
+.pill-button {
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pill-button:hover {
+  background: var(--surface-soft);
+}
+
+.pill-button svg {
+  color: var(--primary);
+}
+
+/* כפתור ההגדרות בפינת הכותרת */
+.header-button {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+/* ===== כרטיס הסיכום ===== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  margin-bottom: 16px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+  color: #ffffff;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--hero-to) 30%, transparent);
+}
+
+/* עיגול דקורטיבי שקוף בפינה */
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  inset-inline-end: -70px;
+  top: -90px;
+  pointer-events: none;
+}
+
+.hero-label {
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+.hero-amount {
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 2px 0 14px;
+  letter-spacing: -0.02em;
+}
+
+/* פס התקציב בתוך כרטיס הסיכום */
+.budget {
+  margin: -4px 0 14px;
+}
+
+.budget-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.budget-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  transition: width 0.4s ease-out;
+}
+
+.budget-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.88rem;
+  opacity: 0.95;
+}
+
+/* חריגה מהתקציב: הפס בצבע ענבר */
+.budget.over .budget-fill {
+  background: #ffd27a;
+}
+
+.budget.over .budget-text {
+  font-weight: 600;
+}
+
+/* ===== פירוט לפי מנוי (בתוך כרטיס הסיכום) ===== */
+.breakdown {
+  position: relative;
+  z-index: 1; /* מעל העיגול הדקורטיבי של הכרטיס */
+  margin-top: 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.breakdown summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none; /* מסתיר את המשולש הרגיל של הדפדפן */
+}
+
+.breakdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.breakdown summary:focus-visible {
+  outline-color: #ffffff;
+}
+
+.breakdown-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.breakdown[open] .breakdown-chevron {
+  transform: rotate(180deg);
+}
+
+.breakdown-body {
+  padding: 0 14px 14px;
+}
+
+.breakdown-group + .breakdown-group {
+  margin-top: 14px;
+}
+
+/* כותרת קבוצה: "חיובים חודשיים" והסכום שלה */
+.breakdown-group-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 2px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.breakdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.breakdown-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.breakdown-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.breakdown-when {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.breakdown-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.breakdown-amount small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* שורת הסה"כ בסוף הפירוט, שווה להוצאה החודשית שלמעלה */
+.breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.95rem;
+}
+
+.hero-details strong {
+  font-weight: 600;
+}
+
+/* ===== תזכורת לחיובים קרובים ===== */
+.upcoming {
+  background: var(--warm-bg);
+  border: 1px solid var(--warm-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.upcoming-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.upcoming-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--warm-icon-bg);
+  color: var(--warm-icon);
+  flex-shrink: 0;
+}
+
+.upcoming-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.upcoming-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.upcoming-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--warm-border);
+  overflow-wrap: anywhere;
+}
+
+.upcoming-when {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.upcoming-price {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.upcoming-total {
+  margin: 10px 0 0;
+  text-align: left;
+}
+
+/* ===== כפתורים ===== */
+.button {
+  font: inherit;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 18px;
+  min-height: 46px; /* גודל נוח ללחיצה באצבע */
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.button:hover {
+  background: var(--surface-soft);
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+.button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.button.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.button.full {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.05rem;
+}
+
+/* כפתור עגול עם אייקון בלבד (עריכה ומחיקה) */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.icon-button:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.icon-button.danger:hover {
+  color: var(--danger);
+}
+
+/* ===== סינון לפי קטגוריה ===== */
+/* שורה אחת שגוללים בה הצידה, כדי שהכפתורים לא יתפסו כמה שורות בטלפון */
+.filter {
+  display: flex;
+  gap: 8px;
+  margin: 20px -16px 0;
+  padding: 2px 16px 6px;
+  overflow-x: auto;
+  scrollbar-width: none; /* מסתיר את פס הגלילה (Firefox) */
+}
+
+.filter::-webkit-scrollbar {
+  display: none; /* מסתיר את פס הגלילה (Chrome ו-Safari) */
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  border-color: var(--muted);
+}
+
+/* נקודת הצבע של הקטגוריה */
+.chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tone-fg);
+  flex-shrink: 0;
+}
+
+.chip-amount {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* הכפתור שנבחר */
+.chip[aria-pressed="true"] {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+
+.chip[aria-pressed="true"] .chip-amount {
+  color: var(--bg);
+  opacity: 0.8;
+}
+
+/* ===== רשימת המנויים ===== */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* כרטיס מנוי: רשת (grid) של שתי שורות
+   שורה 1: עיגול | שם וקטגוריה | מחיר
+   שורה 2: עיגול | תאריך       | כפתורים */
+.card {
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  grid-template-areas:
+    "avatar heading price"
+    "avatar date    actions";
+  column-gap: 12px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 10px;
+  box-shadow: var(--shadow);
+}
+
+.avatar {
+  grid-area: avatar;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.card-heading {
+  grid-area: heading;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.card-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* תגית קטנה בצבע הקטגוריה */
+.tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  white-space: nowrap;
+}
+
+.tag:empty {
+  display: none;
+}
+
+.card-price {
+  grid-area: price;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.card-amount {
+  font-weight: 700;
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.card-frequency {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.card-date {
+  grid-area: date;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* חיוב בימים הקרובים מקבל צבע מודגש */
+.card-date.soon {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.card-actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-end;
+  margin-inline-end: -8px;
+}
+
+/* ההערות יורדות לשורה שלישית, רק אם יש הערות */
+.card-notes {
+  grid-column: 2 / -1;
+  margin: 6px 0 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.card-notes:empty {
+  display: none;
+}
+
+/* ===== מצב ריק ===== */
+.empty {
+  text-align: center;
+  padding: 40px 16px 24px;
+}
+
+.empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  background: var(--surface-soft);
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.empty-text {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.empty-guide-button {
+  margin-top: 18px;
+}
+
+.empty-guide-button svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ===== גיבוי ===== */
+.backup {
+  margin-top: 36px;
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.backup-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.backup-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 14px;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.backup-actions .button {
+  flex: 1;
+  border-color: transparent;
+}
+
+.backup-actions .button:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* ===== חלון הטופס ===== */
+dialog {
+  border: none;
+  padding: 0;
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(40, 20, 10, 0.3);
+  overflow-y: auto; /* טופס ארוך נגלל בתוך החלון */
+}
+
+dialog::backdrop {
+  background: rgba(43, 28, 18, 0.45);
+}
+
+dialog[open] {
+  animation: pop-in 0.2s ease-out;
+}
+
+dialog[open]::backdrop {
+  animation: fade-in 0.2s ease-out;
+}
+
+dialog form,
+.dialog-body {
+  padding: 22px 20px 20px;
+}
+
+dialog h2 {
+  margin: 0 0 18px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* הפס הקטן בראש החלון בטלפון. במחשב הוא מוסתר */
+.sheet-handle {
+  display: none;
+}
+
+/* בטלפון: החלון נצמד לתחתית המסך ועולה מלמטה */
+@media (max-width: 599px) {
+  dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  dialog[open] {
+    animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  dialog form,
+  .dialog-body {
+    /* מקום גם לפס הבית של הטלפון בתחתית המסך */
+    padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sheet-handle {
+    display: block;
+    width: 40px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border);
+    margin: -8px auto 14px;
+  }
+}
+
+/* ===== שדות הטופס ===== */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.field > span:first-child,
+.field legend {
+  font-weight: 500;
+  font-size: 0.92rem;
+  padding: 0;
+}
+
+.field legend {
+  margin-bottom: 6px;
+}
+
+.field small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* שני שדות זה לצד זה (מחיר ותאריך) */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 11px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  width: 100%;
+  min-height: 46px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+/* שדה המחיר עם סימן ₪ בצד */
+.input-wrap {
+  position: relative;
+  display: block;
+}
+
+.input-wrap input {
+  padding-inline-end: 34px;
+}
+
+.input-suffix {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* מסתירים את החיצים הקטנים של שדה מספר */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* מתג (למשל חודשי/שנתי): כפתורי רדיו מוסתרים, והטקסט שלידם נראה ככפתור.
+   כל אפשרות מקבלת רוחב שווה, לא משנה כמה אפשרויות יש */
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.segmented label {
+  position: relative;
+  cursor: pointer;
+}
+
+.segmented input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented span {
+  display: block;
+  text-align: center;
+  padding: 9px;
+  border-radius: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.segmented input:checked + span {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.segmented input:focus-visible + span {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* כפתורי השמירה והביטול נשארים גלויים בתחתית החלון גם כשגוללים */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px 0 4px;
+  background: var(--surface);
+}
+
+.form-actions .button.primary {
+  flex: 2;
+}
+
+.form-actions .button {
+  flex: 1;
+}
+
+/* ===== בחירת אייקון ===== */
+/* אותו טריק של רדיו מוסתר. הצבע מגיע מהקטגוריה שנבחרה בטופס */
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.icon-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.icon-option input,
+.swatch input,
+.tone-choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.icon-option span {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-weight: 700;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.icon-option:hover span {
+  color: var(--text);
+}
+
+.icon-option input:checked + span {
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  border-color: var(--tone-fg);
+}
+
+.icon-option input:focus-visible + span {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* ===== בחירת צבע האתר ===== */
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.swatch {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.swatch-color {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--swatch);
+  transition: box-shadow 0.15s;
+}
+
+.swatch-color[data-color="terracotta"] { --swatch: #c4492f; }
+.swatch-color[data-color="sage"]       { --swatch: #3d7a55; }
+.swatch-color[data-color="ocean"]      { --swatch: #2f6db0; }
+.swatch-color[data-color="plum"]       { --swatch: #7a4bb0; }
+.swatch-color[data-color="rose"]       { --swatch: #b83c6a; }
+
+/* הצבע שנבחר: טבעת מסביב וסימן וי לבן באמצע */
+.swatch input:checked + .swatch-color {
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--swatch);
+}
+
+.swatch input:checked + .swatch-color::after {
+  content: "";
+  width: 14px;
+  height: 7px;
+  border: solid #ffffff;
+  border-width: 0 0 2.5px 2.5px;
+  transform: translateY(-2px) rotate(-45deg);
+}
+
+.swatch input:focus-visible + .swatch-color {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+
+.swatch-name {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.swatch input:checked ~ .swatch-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ===== ניהול קטגוריות ===== */
+.category-editor {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 4px;
+  padding-inline-start: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.category-row-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.tone-picker {
+  display: flex;
+  gap: 2px;
+}
+
+.tone-choice {
+  position: relative;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.tone-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tone-fg);
+  transition: box-shadow 0.15s;
+}
+
+.tone-choice input:checked + .tone-dot {
+  box-shadow: 0 0 0 2px var(--surface-soft), 0 0 0 4px var(--tone-fg);
+}
+
+.tone-choice input:focus-visible + .tone-dot {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.category-add {
+  display: flex;
+  gap: 8px;
+}
+
+.category-add .button {
+  flex-shrink: 0;
+}
+
+.category-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+
+/* ===== תגית "כמעט לא בשימוש" ===== */
+.tag.usage-tag {
+  background: var(--warm-bg);
+  color: var(--warm-icon);
+  border: 1px dashed var(--warm-border);
+}
+
+/* ===== תובנות ===== */
+.insights {
+  margin-top: 28px;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.insight-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+.insight-text {
+  margin: 0;
+  padding-top: 5px;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.insight-text strong {
+  font-weight: 600;
+}
+
+/* תובנה שכדאי לשים לב אליה (מנויים שכמעט לא בשימוש) */
+.insight.highlight {
+  background: var(--warm-bg);
+  border-color: var(--warm-border);
+}
+
+.insight.highlight .insight-icon {
+  background: var(--warm-icon-bg);
+  color: var(--warm-icon);
+}
+
+/* טיפ כללי, בצבע עדין יותר */
+.insight.tip .insight-text {
+  color: var(--muted);
+}
+
+/* ===== כפתור מחיקה מלא (בחלון האישור) ===== */
+.button.danger-fill {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.button.danger-fill:hover {
+  background: var(--danger);
+  filter: brightness(0.92);
+}
+
+/* ===== חלון אישור ===== */
+.confirm-dialog {
+  width: min(400px, calc(100% - 32px));
+}
+
+.confirm-message {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+/* ===== הודעה קצרה בתחתית המסך ===== */
+/* popover מציג אותה מעל הכול, גם מעל חלון פתוח */
+.toast {
+  position: fixed;
+  inset: auto 0 calc(24px + env(safe-area-inset-bottom, 0px));
+  margin: 0 auto;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 12px 18px;
+  border: none;
+  border-radius: 14px;
+  background: var(--text);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: fade-in 0.2s ease-out;
+}
+
+/* ===== חלונות הגיבוי ===== */
+.dialog-text {
+  color: var(--muted);
+  margin: -8px 0 14px;
+}
+
+/* תיבת טקסט לגיבוי: כתב קטן, משמאל לימין, כי זה JSON באנגלית */
+.code-box {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  direction: ltr;
+  text-align: left;
+  background: var(--surface-soft);
+  resize: vertical;
+}
+
+.choose-file-button {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ===== נתוני דוגמה ===== */
+.example-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--warm-border);
+  background: var(--warm-bg);
+  font-size: 0.9rem;
+}
+
+.example-banner .text-button {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.empty-example-button {
+  display: block;
+  margin: 10px auto 0;
+}
+
+/* מתג עם הרבה אפשרויות (תדירות): טקסט קטן יותר כדי שהכול ייכנס בשורה אחת */
+.segmented.compact span {
+  padding: 9px 2px;
+  font-size: 0.85rem;
+}
+
+/* ===== תזכורת לחידוש שנתי (בראש המסך) ===== */
+.renewal-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--warm-border);
+  background: var(--warm-bg);
+}
+
+.renewal-alert-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--warm-icon-bg);
+  color: var(--warm-icon);
+}
+
+.renewal-alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.renewal-alert-title {
+  margin: 4px 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.renewal-alert-list {
+  margin: 0;
+  padding-inline-start: 18px;
+  font-size: 0.93rem;
+}
+
+.renewal-alert-list li + li {
+  margin-top: 2px;
+}
+
+.danger-text {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.renewal-alert .text-button {
+  margin-top: 4px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ===== חידושים שנתיים ===== */
+.renewals {
+  margin-top: 28px;
+}
+
+/* כותרת של אזור, עם מידע קצר בצד (למשל סכום) */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.section-head .section-title {
+  margin: 0;
+}
+
+.section-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.section-text {
+  margin: 2px 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.renewals-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.renewal {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* חידוש שבתוך תקופת התזכורת */
+.renewal.near {
+  border-color: var(--warm-border);
+}
+
+.renewal-top {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.renewal-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  font-weight: 700;
+}
+
+.renewal-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.renewal-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.renewal-date {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.renewal.near .renewal-date {
+  color: var(--warm-icon);
+  font-weight: 600;
+}
+
+.renewal-amount {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* פס: כמה מהשנה עברה עד החידוש */
+.renewal-bar {
+  height: 6px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+.renewal-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.renewal.near .renewal-bar span {
+  background: var(--warm-icon);
+}
+
+.renewal-note {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.renewal-note.warn {
+  color: var(--warm-icon);
+}
+
+.renewal-note.danger {
+  color: var(--danger);
+}
+
+.renewal-decision {
+  margin-top: 10px;
+}
+
+/* ===== הצעות לחיסכון =====
+.savings {
+  margin-top: 28px;
+}
+
+/* מחשבון "מה אם אבטל?" */
+.whatif {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.whatif-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.whatif-text {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.whatif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.whatif-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.whatif-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.whatif-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.whatif-amount {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* מנוי מסומן נראה "מחוק" */
+.whatif-row input:checked ~ .whatif-name,
+.whatif-row input:checked ~ .whatif-amount {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.whatif-result {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.whatif-main {
+  margin: 0;
+}
+
+.whatif-main strong {
+  color: var(--primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.whatif-detail,
+.whatif-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.whatif-hint {
+  margin: 0;
+}
+
+/* ===== המדריך ===== */
+.guide-intro {
+  color: var(--muted);
+  margin: -8px 0 16px;
+}
+
+/* כמה שלבים סיימת */
+.guide-progress {
+  margin-bottom: 16px;
+}
+
+.guide-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.guide-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+#guide-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  transition: width 0.3s ease-out;
+}
+
+/* כפתור שנראה כמו קישור */
+.text-button {
+  font: inherit;
+  font-size: 0.85rem;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.text-button:hover {
+  color: var(--text);
+}
+
+.guide-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* שלב אחד: כותרת שלוחצים עליה, והסבר שנפתח מתחתיה */
+.guide-step {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+.guide-step[open] {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.guide-step summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 60px;
+  cursor: pointer;
+  list-style: none; /* מסתיר את המשולש הרגיל של הדפדפן */
+}
+
+.guide-step summary::-webkit-details-marker {
+  display: none;
+}
+
+.step-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+/* בשלב שהושלם: העיגול מתמלא בצבע ומופיע סימן וי במקום האייקון */
+.step-icon-done {
+  display: none;
+}
+
+.guide-step.done .step-icon {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.guide-step.done .step-icon-main {
+  display: none;
+}
+
+.guide-step.done .step-icon-done {
+  display: block;
+}
+
+.step-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.step-title small {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.guide-step.done .step-title strong {
+  color: var(--muted);
+}
+
+.step-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+
+.guide-step[open] .step-chevron {
+  transform: rotate(180deg);
+}
+
+.guide-step-body {
+  padding: 0 14px 14px;
+}
+
+.guide-step-body ul,
+.guide-tips ul {
+  margin: 0;
+  padding-inline-start: 20px;
+  list-style: disc;
+}
+
+.guide-step-body li,
+.guide-tips li {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+/* נתיב בתפריט או מילת חיפוש, למשל "הגדרות ← מינויים" */
+.path {
+  display: inline-block;
+  padding: 0 7px;
+  margin: 1px 0;
+  border-radius: 6px;
+  background: var(--surface-soft);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* "סיימתי את השלב הזה" */
+.step-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* טיפים להכנסת חיוב לאפליקציה */
+.guide-tips {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--warm-bg);
+  border: 1px solid var(--warm-border);
+}
+
+.guide-tips h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.guide-tips li:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== אנימציות ===== */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* מי שביקש במערכת ההפעלה פחות תנועה, לא יקבל אנימציות */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  dialog[open],
+  dialog[open]::backdrop {
+    animation: none !important;
+    transition: none !important;
+  }
+}
