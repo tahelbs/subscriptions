@@ -12,9 +12,24 @@ const TONE_COUNT = 6;
 const TONE_NAMES = ['אפרסק', 'ענבר', 'מרווה', 'תכלת', 'לבנדר', 'ורד'];
 
 // האפשרויות שמותר לבחור בהגדרות
-const ACCENTS = ['terracotta', 'sage', 'ocean', 'plum', 'rose'];
+const ACCENTS = ['navy', 'graphite', 'forest', 'burgundy', 'slate'];
+
+// צבעים מהעיצוב הקודם עוברים לגוון הרשמי הכי קרוב
+const OLD_ACCENTS = {
+  terracotta: 'navy',
+  sage: 'forest',
+  ocean: 'slate',
+  plum: 'graphite',
+  rose: 'burgundy',
+};
 const THEMES = ['auto', 'light', 'dark'];
 const UPCOMING_OPTIONS = [3, 7, 14];
+
+// כמה ימים לפני סוף תקופת ניסיון להזכיר
+const TRIAL_NOTICE_DAYS = 7;
+
+// כמה ימים אחורה להציג "התייקר" או "הוזל" בכרטיס
+const PRICE_CHANGE_DAYS = 365;
 
 // כמה ימים לפני חידוש שנתי להתחיל להזכיר (נבחר בהגדרות)
 const RENEWAL_NOTICE_OPTIONS = [14, 30, 60];
@@ -153,6 +168,18 @@ const categoryFilter = document.getElementById('category-filter');
 const insightsSection = document.getElementById('insights');
 const insightsList = document.getElementById('insights-list');
 const exampleBanner = document.getElementById('example-banner');
+const renewalsBadge = document.getElementById('renewals-badge');
+const renewalsEmpty = document.getElementById('renewals-empty');
+const savingsEmpty = document.getElementById('savings-empty');
+const subsCount = document.getElementById('subs-count');
+const listTools = document.getElementById('list-tools');
+const searchInput = document.getElementById('search-input');
+const sortSelect = document.getElementById('sort-select');
+const noResults = document.getElementById('no-results');
+
+// המיון שנבחר נשמר בדפדפן, כדי שיישאר גם בפעם הבאה
+const SORT_KEY = 'listSort';
+const SORT_OPTIONS = ['date', 'price-desc', 'price-asc', 'name'];
 const breakdownEl = document.getElementById('breakdown');
 const renewalsSection = document.getElementById('renewals');
 const renewalsList = document.getElementById('renewals-list');
@@ -161,6 +188,12 @@ const renewalAlert = document.getElementById('renewal-alert');
 const renewalAlertTitle = document.getElementById('renewal-alert-title');
 const renewalAlertList = document.getElementById('renewal-alert-list');
 const renewalField = document.getElementById('renewal-price-field');
+const trialAlert = document.getElementById('trial-alert');
+const trialAlertTitle = document.getElementById('trial-alert-title');
+const trialAlertList = document.getElementById('trial-alert-list');
+const chartSection = document.getElementById('chart');
+const chartList = document.getElementById('chart-list');
+const dateLabel = document.getElementById('date-label');
 const savingsSection = document.getElementById('savings');
 const savingsList = document.getElementById('savings-list');
 const whatIfList = document.getElementById('whatif-list');
@@ -187,9 +220,23 @@ const newCategoryInput = document.getElementById('new-category');
 const toast = document.getElementById('toast');
 let toastTimer = null;
 
-// מציג הודעה קצרה בתחתית המסך לכמה שניות
-function showToast(message) {
+// מציג הודעה קצרה בתחתית המסך לכמה שניות.
+// אפשר להוסיף כפתור פעולה, למשל showToast('נמחק', 'ביטול', () => ...)
+function showToast(message, actionLabel, onAction) {
   toast.textContent = message;
+
+  if (actionLabel) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = actionLabel;
+    button.addEventListener('click', () => {
+      hideToast();
+      onAction();
+    });
+    toast.append(' ', button);
+  }
+
   toast.hidden = false;
   // popover מציג את ההודעה מעל הכול, גם מעל חלון פתוח
   try {
@@ -197,13 +244,17 @@ function showToast(message) {
     toast.showPopover();
   } catch (error) {}
 
+  // הודעה עם כפתור נשארת יותר זמן, כדי שיהיה זמן ללחוץ
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    try {
-      toast.hidePopover();
-    } catch (error) {}
-    toast.hidden = true;
-  }, 3200);
+  toastTimer = setTimeout(hideToast, actionLabel ? 6000 : 3200);
+}
+
+function hideToast() {
+  clearTimeout(toastTimer);
+  try {
+    toast.hidePopover();
+  } catch (error) {}
+  toast.hidden = true;
 }
 
 const confirmDialog = document.getElementById('confirm-dialog');
@@ -291,7 +342,7 @@ function saveSubscriptions(subscriptions) {
 function defaultSettings() {
   return {
     name: '',
-    accent: 'terracotta',
+    accent: 'navy',
     theme: 'auto',
     upcomingDays: 7,
     renewalNotice: 30,
@@ -310,7 +361,11 @@ function cleanSettings(raw) {
 
   return {
     name: typeof raw.name === 'string' ? raw.name.trim().slice(0, 30) : '',
-    accent: ACCENTS.includes(raw.accent) ? raw.accent : defaults.accent,
+    accent: ACCENTS.includes(raw.accent)
+      ? raw.accent
+      : Object.hasOwn(OLD_ACCENTS, raw.accent)
+        ? OLD_ACCENTS[raw.accent]
+        : defaults.accent,
     theme: THEMES.includes(raw.theme) ? raw.theme : defaults.theme,
     upcomingDays: UPCOMING_OPTIONS.includes(raw.upcomingDays) ? raw.upcomingDays : defaults.upcomingDays,
     renewalNotice: RENEWAL_NOTICE_OPTIONS.includes(raw.renewalNotice) ? raw.renewalNotice : defaults.renewalNotice,
@@ -378,9 +433,9 @@ function timeGreeting() {
   return 'לילה טוב';
 }
 
-// הכותרת: ברכה עם השם אם הוא נשמר, ואחרת "המנויים שלי"
+// הכותרת: ברכה לפי השעה, ואחריה השם אם הוא נשמר בהגדרות (למשל "ערב טוב, תהל")
 function renderHeader() {
-  pageTitle.textContent = settings.name ? `${timeGreeting()}, ${settings.name}` : 'המנויים שלי';
+  pageTitle.textContent = settings.name ? `${timeGreeting()}, ${isolate(settings.name)}` : timeGreeting();
 }
 
 // ===== חישובים =====
@@ -401,12 +456,14 @@ function monthlyCost(sub) {
   return frequency.perYear === 12 ? sub.price : yearlyCost(sub) / 12;
 }
 
-// מחשב את ההוצאה החודשית והשנתית של רשימת מנויים
+// מחשב את ההוצאה החודשית והשנתית של רשימת מנויים (בלי מנויים בתקופת ניסיון)
 function calcTotals(subscriptions) {
   let monthly = 0;
   let yearly = 0;
 
   for (const sub of subscriptions) {
+    // מנוי בתקופת ניסיון עוד לא עולה כסף, ולכן לא נספר
+    if (sub.trial) continue;
     monthly += monthlyCost(sub);
     yearly += yearlyCost(sub);
   }
@@ -480,6 +537,21 @@ function addMonths(dateString, months, billingDay) {
   return formatDate(new Date(year, month, day));
 }
 
+// ===== היסטוריית מחירים =====
+
+// מוסיף לרשימת המחירים הקודמים את המחיר שהיה עד עכשיו (שומרים רק 10 אחרונים)
+function addPriceHistory(history, date, oldPrice) {
+  return [...(Array.isArray(history) ? history : []), { date, price: oldPrice }].slice(-10);
+}
+
+// השינוי האחרון במחיר, אם היה בשנה האחרונה: { from, to, diff, date }. אחרת null
+function lastPriceChange(sub) {
+  const history = Array.isArray(sub.priceHistory) ? sub.priceHistory : [];
+  const last = history[history.length - 1];
+  if (!last || -daysUntil(last.date) > PRICE_CHANGE_DAYS || last.price === sub.price) return null;
+  return { from: last.price, to: sub.price, diff: sub.price - last.price, date: last.date };
+}
+
 // מוסיף ימים לתאריך ומחזיר מחרוזת YYYY-MM-DD
 function addDays(dateString, days) {
   const date = parseDate(dateString);
@@ -509,10 +581,13 @@ function advancePastDates(subscriptions) {
       // החיוב קרה: מעכשיו המחיר הוא מחיר החידוש (אם היה),
       // וההחלטה "לחדש או לבטל" מתחילה מחדש לקראת החידוש הבא
       if (sub.renewalPrice > 0) {
+        sub.priceHistory = addPriceHistory(sub.priceHistory, todayString(), sub.price);
         sub.price = sub.renewalPrice;
         sub.renewalPrice = 0;
       }
       sub.renewDecision = '';
+      // תקופת הניסיון נגמרה: מעכשיו זה מנוי בתשלום
+      sub.trial = false;
       changed = true;
     }
   }
@@ -601,18 +676,32 @@ function render() {
   // כפתורי הסינון. הפונקציה גם מאפסת את הבחירה אם הקטגוריה כבר לא קיימת
   renderFilter(subscriptions);
 
-  // ברשימה מציגים רק את המנויים של הקטגוריה שנבחרה.
+  // ברשימה מציגים רק את המנויים שמתאימים לקטגוריה ולחיפוש, לפי המיון שנבחר.
   // הסיכום, התזכורת והתובנות ממשיכים לחשב את כל המנויים
-  const visible =
+  const inCategory =
     selectedCategory === null
       ? subscriptions
       : subscriptions.filter((sub) => (sub.category || '') === selectedCategory);
+  const visible = sortList(searchList(inCategory, searchInput.value));
+
+  listTools.hidden = subscriptions.length < 2;
 
   list.innerHTML = '';
 
   for (const sub of visible) {
     list.appendChild(createCard(sub));
   }
+
+  // יש מנויים, אבל אף אחד לא מתאים לחיפוש
+  // אין מה להציג: או שאין עדיין מנויים, או שאף אחד לא מתאים לחיפוש
+  noResults.hidden = visible.length > 0;
+  noResults.textContent =
+    subscriptions.length === 0
+      ? 'עדיין אין מנויים. לחץ על "הוספת מנוי" כדי להתחיל'
+      : 'לא נמצאו מנויים שמתאימים לחיפוש';
+
+  const total = subscriptions.length;
+  subsCount.textContent = total === 1 ? 'מנוי אחד' : `${total} מנויים`;
 
   emptyMessage.hidden = subscriptions.length > 0;
   exampleBanner.hidden = !subscriptions.some((sub) => sub.example);
@@ -625,14 +714,56 @@ function render() {
   subscriptionCountEl.textContent =
     count === 0 ? 'אין מנויים' : count === 1 ? 'מנוי אחד' : `${count} מנויים`;
 
+  // מנויים בתקופת ניסיון לא עולים כסף עדיין, ולכן לא נכנסים לתובנות ולחישובים
+  const paying = subscriptions.filter((sub) => !sub.trial);
+
   renderBudget(totals.monthly);
   renderBreakdown(subscriptions, totals.monthly);
   renderUpcoming(subscriptions);
+  renderTrialAlert(subscriptions);
   renderRenewalAlert(subscriptions);
   renderRenewals(subscriptions);
-  renderInsights(subscriptions);
+  renderChart(paying);
+  renderInsights(paying);
   renderSavings(subscriptions);
   renderCategoryOptions();
+}
+
+// ===== חיפוש ומיון ברשימה =====
+
+// מסנן לפי טקסט החיפוש: בשם, בקטגוריה או בהערות. בלי הבדל בין אותיות גדולות לקטנות
+function searchList(subscriptions, query) {
+  const text = query.trim().toLowerCase();
+  if (!text) return subscriptions;
+
+  return subscriptions.filter((sub) =>
+    [sub.name, sub.category, sub.notes].some((field) => (field || '').toLowerCase().includes(text))
+  );
+}
+
+// ממיין לפי מה שנבחר בתפריט המיון. מחזיר רשימה חדשה (לא משנה את המקורית)
+function sortList(subscriptions) {
+  const sorted = [...subscriptions];
+  switch (sortSelect.value) {
+    case 'price-desc':
+      return sorted.sort((a, b) => monthlyCost(b) - monthlyCost(a));
+    case 'price-asc':
+      return sorted.sort((a, b) => monthlyCost(a) - monthlyCost(b));
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    default:
+      return sorted; // כבר ממוין לפי תאריך החיוב הבא
+  }
+}
+
+// קורא את המיון השמור. בדפדפן שחוסם שמירה פשוט מתחילים מ"לפי תאריך"
+function loadSort() {
+  try {
+    const saved = localStorage.getItem(SORT_KEY);
+    return SORT_OPTIONS.includes(saved) ? saved : 'date';
+  } catch (error) {
+    return 'date';
+  }
 }
 
 // ===== פירוט ההוצאה לפי מנוי =====
@@ -645,11 +776,19 @@ function renderBreakdown(subscriptions, monthlyTotal) {
   if (subscriptions.length === 0) return;
 
   // קבוצה לכל תדירות שיש בה מנויים, לפי הסדר: חודשיים, שבועיים, דו-חודשיים, רבעוניים, שנתיים
+  const paying = subscriptions.filter((sub) => !sub.trial);
   for (const key of ['monthly', 'weekly', 'bimonthly', 'quarterly', 'yearly']) {
-    const inGroup = subscriptions.filter((sub) => frequencyOf(sub) === FREQUENCIES[key]);
+    const inGroup = paying.filter((sub) => frequencyOf(sub) === FREQUENCIES[key]);
     if (inGroup.length === 0) continue;
     const title = key === 'monthly' ? FREQUENCIES[key].group : `${FREQUENCIES[key].group}, בחישוב חודשי`;
     breakdownBody.appendChild(createBreakdownGroup(title, inGroup));
+  }
+
+  // מנויים בתקופת ניסיון: מופיעים בנפרד, ולא נספרים בסה"כ
+  const trials = subscriptions.filter((sub) => sub.trial);
+  if (trials.length > 0) {
+    const count = trials.length === 1 ? 'מנוי אחד' : `${trials.length} מנויים`;
+    breakdownBody.appendChild(createBreakdownGroup('בתקופת ניסיון, לא נספר בסכום', trials, count));
   }
 
   // הסה"כ שווה בדיוק להוצאה החודשית שבראש הכרטיס
@@ -664,7 +803,7 @@ function renderBreakdown(subscriptions, monthlyTotal) {
 }
 
 // קבוצה אחת בפירוט (למשל חודשיים): כותרת עם הסכום שלה, ושורה לכל מנוי
-function createBreakdownGroup(title, subscriptions) {
+function createBreakdownGroup(title, subscriptions, sumText) {
   const group = document.createElement('section');
   group.className = 'breakdown-group';
 
@@ -673,7 +812,7 @@ function createBreakdownGroup(title, subscriptions) {
   const titleText = document.createElement('span');
   titleText.textContent = title;
   const groupSum = document.createElement('span');
-  groupSum.textContent = `${formatPrice(calcTotals(subscriptions).monthly)} לחודש`;
+  groupSum.textContent = sumText || `${formatPrice(calcTotals(subscriptions).monthly)} לחודש`;
   heading.append(titleText, groupSum);
 
   const rows = document.createElement('ul');
@@ -703,7 +842,9 @@ function createBreakdownRow(sub) {
   const frequency = frequencyOf(sub);
   const when = document.createElement('span');
   when.className = 'breakdown-when';
-  if (frequency === FREQUENCIES.monthly) {
+  if (sub.trial) {
+    when.textContent = `הניסיון נגמר ${describeRelative(sub.nextDate)} · ${shortDate(sub.nextDate)}`;
+  } else if (frequency === FREQUENCIES.monthly) {
     const day = sub.billingDay || parseDate(sub.nextDate).getDate();
     when.textContent = `כל ${day} בחודש · הבא: ${describeRelative(sub.nextDate)}`;
   } else if (frequency === FREQUENCIES.weekly) {
@@ -717,10 +858,14 @@ function createBreakdownRow(sub) {
 
   const amount = document.createElement('span');
   amount.className = 'breakdown-amount';
-  amount.textContent = formatPrice(monthlyCost(sub));
+  amount.textContent = sub.trial ? 'חינם' : formatPrice(monthlyCost(sub));
 
-  // במנוי שאינו חודשי מראים גם את הסכום שבאמת יורד בכל חיוב
-  if (frequency !== FREQUENCIES.monthly) {
+  // בניסיון: כמה יעלה אחר כך. במנוי שאינו חודשי: הסכום שבאמת יורד בכל חיוב
+  if (sub.trial) {
+    const later = document.createElement('small');
+    later.textContent = `ואז ${formatPrice(sub.price)} ${frequency.per}`;
+    amount.appendChild(later);
+  } else if (frequency !== FREQUENCIES.monthly) {
     const realPrice = document.createElement('small');
     realPrice.textContent = `${formatPrice(sub.price)} ${frequency.per}`;
     amount.appendChild(realPrice);
@@ -903,6 +1048,23 @@ function buildInsights(subscriptions) {
     });
   }
 
+  // מנויים שהתייקרו בשנה האחרונה, ובכמה זה מייקר את ההוצאה החודשית
+  const raised = subscriptions
+    .map((sub) => ({ sub, change: lastPriceChange(sub) }))
+    .filter((item) => item.change && item.change.diff > 0);
+  if (raised.length > 0) {
+    const extra = raised.reduce(
+      (sum, item) => sum + monthlyCost(item.sub) - monthlyCost({ ...item.sub, price: item.change.from }),
+      0
+    );
+    const who = raised.length === 1 ? [{ b: raised[0].sub.name }, ' התייקר'] : [{ b: `${raised.length} מנויים` }, ' התייקרו'];
+    insights.push({
+      icon: 'trending',
+      type: 'highlight',
+      parts: [...who, ' בשנה האחרונה. זה מוסיף ', { b: formatPrice(extra) }, ' להוצאה החודשית'],
+    });
+  }
+
   // 2. על איזו קטגוריה הולך הכי הרבה כסף
   const byCategory = new Map();
   for (const sub of subscriptions) {
@@ -989,6 +1151,11 @@ function renderRenewalAlert(subscriptions) {
   );
 
   renewalAlert.hidden = due.length === 0;
+
+  // מספר קטן על לשונית "חידושים" בתפריט התחתון
+  renewalsBadge.hidden = due.length === 0;
+  renewalsBadge.textContent = String(due.length);
+  renewalsBadge.setAttribute('aria-label', `${due.length} חידושים מתקרבים`);
   renewalAlertList.innerHTML = '';
   if (due.length === 0) return;
 
@@ -1009,11 +1176,85 @@ function renderRenewalAlert(subscriptions) {
   }
 }
 
+// תזכורת בדף הבית: תקופות ניסיון שנגמרות בשבוע הקרוב
+function renderTrialAlert(subscriptions) {
+  const ending = subscriptions.filter(
+    (sub) => sub.trial && daysUntil(sub.nextDate) <= TRIAL_NOTICE_DAYS
+  );
+
+  trialAlert.hidden = ending.length === 0;
+  trialAlertList.innerHTML = '';
+  if (ending.length === 0) return;
+
+  trialAlertTitle.textContent =
+    ending.length === 1 ? 'תקופת ניסיון נגמרת' : `${ending.length} תקופות ניסיון נגמרות`;
+
+  for (const sub of ending) {
+    const item = document.createElement('li');
+    item.textContent =
+      `${isolate(sub.name)}: הניסיון נגמר ${describeRelative(sub.nextDate)}, ` +
+      `ואז ${formatPrice(sub.price)} ${frequencyOf(sub).per}. לא צריך? לבטל לפני ${shortDate(sub.nextDate)}`;
+    trialAlertList.appendChild(item);
+  }
+}
+
+// ===== גרף לפי קטגוריה =====
+
+// מצייר גרף עמודות: כמה כל קטגוריה עולה בחודש, מהיקרה לזולה.
+// אורך כל עמודה יחסי לקטגוריה היקרה ביותר
+function renderChart(paying) {
+  chartList.innerHTML = '';
+  chartSection.hidden = paying.length === 0;
+  if (paying.length === 0) return;
+
+  const byCategory = new Map();
+  for (const sub of paying) {
+    const key = sub.category || '';
+    byCategory.set(key, (byCategory.get(key) || 0) + monthlyCost(sub));
+  }
+
+  const rows = [...byCategory.entries()].sort((a, b) => b[1] - a[1]);
+  const total = rows.reduce((sum, [, amount]) => sum + amount, 0);
+  const max = rows[0][1];
+
+  for (const [category, amount] of rows) {
+    const item = document.createElement('li');
+    item.className = `chart-row ${toneClass(category)}`;
+
+    const labels = document.createElement('div');
+    labels.className = 'chart-labels';
+
+    const name = document.createElement('span');
+    name.className = 'chart-name';
+    const dot = document.createElement('span');
+    dot.className = 'chip-dot';
+    name.append(dot, isolate(categoryLabel(category)));
+
+    const value = document.createElement('span');
+    value.className = 'chart-value';
+    const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
+    value.textContent = `${formatPrice(amount)} · ${percent}%`;
+
+    labels.append(name, value);
+
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.setAttribute('aria-hidden', 'true');
+    const fill = document.createElement('span');
+    fill.style.width = `${max > 0 ? (amount / max) * 100 : 0}%`;
+    bar.appendChild(fill);
+
+    item.append(labels, bar);
+    chartList.appendChild(item);
+  }
+}
+
 // האזור "חידושים שנתיים": כל המנויים השנתיים, מהקרוב לרחוק
 function renderRenewals(subscriptions) {
   const yearly = subscriptions.filter((sub) => frequencyOf(sub) === FREQUENCIES.yearly);
 
   renewalsSection.hidden = yearly.length === 0;
+  renewalsEmpty.hidden = yearly.length > 0;
   renewalsList.innerHTML = '';
   if (yearly.length === 0) return;
 
@@ -1132,6 +1373,11 @@ function setRenewDecision(id, decision) {
   if (decision === 'cancel') showToast(`נרשם: לבטל את ${isolate(sub.name)} לפני ${shortDate(sub.nextDate)}`);
 }
 
+// כשמסמנים "תקופת ניסיון", התאריך בטופס הוא סוף הניסיון
+function updateDateLabel() {
+  dateLabel.textContent = form.elements.trial.checked ? 'סוף תקופת הניסיון' : 'תאריך החיוב הבא';
+}
+
 // שדה "מחיר בחידוש" מופיע בטופס רק כשהתדירות היא שנתית
 function updateRenewalField() {
   renewalField.hidden = form.elements.frequency.value !== 'yearly';
@@ -1148,14 +1394,34 @@ const YEARLY_PLAN_DISCOUNT = 0.15;
 // מצייר את ההצעות לחיסכון ואת המחשבון "מה אם אבטל?"
 function renderSavings(subscriptions) {
   savingsSection.hidden = subscriptions.length === 0;
+  savingsEmpty.hidden = subscriptions.length > 0;
   savingsList.innerHTML = '';
   if (subscriptions.length === 0) return;
 
-  for (const suggestion of buildSavings(subscriptions)) {
+  const paying = subscriptions.filter((sub) => !sub.trial);
+  const trials = subscriptions.filter((sub) => sub.trial);
+
+  // קודם: תקופות ניסיון שיהפכו לתשלום אם לא מבטלים
+  for (const sub of trials) {
+    savingsList.appendChild(
+      createInsight({
+        icon: 'alert',
+        type: 'highlight',
+        parts: [
+          'אם לא תבטל את ',
+          { b: sub.name },
+          ` עד ${shortDate(sub.nextDate)}, תתחיל לשלם `,
+          { b: `${formatPrice(sub.price)} ${frequencyOf(sub).per}` },
+        ],
+      })
+    );
+  }
+
+  for (const suggestion of buildSavings(paying)) {
     savingsList.appendChild(createInsight(suggestion));
   }
 
-  renderWhatIf(subscriptions);
+  renderWhatIf(paying);
 }
 
 // מצמיד אות עברית (כמו ל, ב, מ) לשם. לפני שם באנגלית או מספר מוסיפים מקף:
@@ -1375,16 +1641,54 @@ function createCard(sub) {
     card.querySelector('.card-heading').appendChild(usageTag);
   }
 
-  card.querySelector('.card-amount').textContent = formatPrice(sub.price);
-  card.querySelector('.card-frequency').textContent = frequencyOf(sub).per;
+  // בתקופת ניסיון: "חינם", ומתחת כמה זה יעלה אחר כך
+  if (sub.trial) {
+    card.querySelector('.card-amount').textContent = 'חינם';
+    card.querySelector('.card-frequency').textContent = `ואז ${formatPrice(sub.price)}`;
+    const trialTag = document.createElement('span');
+    trialTag.className = 'tag trial-tag';
+    trialTag.textContent = 'ניסיון';
+    card.querySelector('.card-heading').appendChild(trialTag);
+  } else {
+    card.querySelector('.card-amount').textContent = formatPrice(sub.price);
+    card.querySelector('.card-frequency').textContent = frequencyOf(sub).per;
+  }
 
   const dateEl = card.querySelector('.card-date');
-  dateEl.textContent = describeDate(sub.nextDate);
+  dateEl.textContent = sub.trial
+    ? `סוף הניסיון: ${describeDate(sub.nextDate)}`
+    : describeDate(sub.nextDate);
   if (daysUntil(sub.nextDate) <= SOON_DAYS) {
     dateEl.classList.add('soon');
   }
 
-  card.querySelector('.card-notes').textContent = sub.notes || '';
+  // שינוי מחיר בשנה האחרונה: "התייקר ב-5 ₪ (היה 49.90 ₪)"
+  const change = lastPriceChange(sub);
+  if (change) {
+    const changeEl = document.createElement('span');
+    const up = change.diff > 0;
+    changeEl.className = `price-change ${up ? 'up' : 'down'}`;
+    changeEl.textContent = `${up ? 'התייקר' : 'הוזל'} ב-${formatPrice(Math.abs(change.diff))} (היה ${formatPrice(change.from)})`;
+    dateEl.appendChild(changeEl);
+  }
+
+  // הערות: עד שתי שורות. הערה ארוכה מקבלת כפתור "עוד" שפותח אותה
+  const notesEl = card.querySelector('.card-notes');
+  notesEl.textContent = sub.notes || '';
+  const notes = sub.notes || '';
+  if (notes.length > 70 || notes.split('\n').length > 2) {
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'notes-toggle';
+    toggle.textContent = 'עוד';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.addEventListener('click', () => {
+      const open = notesEl.classList.toggle('expanded');
+      toggle.textContent = open ? 'פחות' : 'עוד';
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    notesEl.after(toggle);
+  }
 
   // לכפתורי האייקון אין טקסט, אז נותנים להם שם לקוראי מסך (וגם טיפ במעבר עכבר)
   const editButton = card.querySelector('.edit-button');
@@ -1396,6 +1700,13 @@ function createCard(sub) {
   deleteButton.setAttribute('aria-label', `מחיקת ${sub.name}`);
   deleteButton.title = 'מחיקה';
   deleteButton.addEventListener('click', () => deleteSubscription(sub));
+
+  // לחיצה בכל מקום בשורה (חוץ מהכפתורים) פותחת עריכה.
+  // מי שמשתמש במקלדת מגיע לעריכה דרך כפתור העיפרון
+  card.addEventListener('click', (event) => {
+    if (event.target.closest('button')) return;
+    openForm(sub);
+  });
 
   return card;
 }
@@ -1463,6 +1774,7 @@ function openForm(sub) {
     form.elements.icon.value = hasIcon(sub.icon) ? sub.icon : '';
     form.elements.usage.value = sub.rarelyUsed ? 'rarely' : 'used';
     form.elements.renewalPrice.value = sub.renewalPrice > 0 ? sub.renewalPrice : '';
+    form.elements.trial.checked = Boolean(sub.trial);
     form.elements.notes.value = sub.notes || '';
   } else {
     editingId = null;
@@ -1473,6 +1785,7 @@ function openForm(sub) {
   updateIconPickerTone();
   updateNoIconLetter();
   updateRenewalField();
+  updateDateLabel();
   dialog.showModal();
 }
 
@@ -1510,7 +1823,18 @@ function handleSubmit(event) {
     renewalPrice: 0,
     // ההחלטה לגבי החידוש נשמרת גם אחרי עריכה
     renewDecision: (oldSubscription && oldSubscription.renewDecision) || '',
+    trial: form.elements.trial.checked,
+    priceHistory: (oldSubscription && oldSubscription.priceHistory) || [],
   };
+
+  // המחיר השתנה (באותה תדירות)? שומרים את המחיר הקודם, כדי להציג "התייקר" או "הוזל"
+  if (
+    oldSubscription &&
+    oldSubscription.frequency === subscription.frequency &&
+    oldSubscription.price !== subscription.price
+  ) {
+    subscription.priceHistory = addPriceHistory(subscription.priceHistory, todayString(), oldSubscription.price);
+  }
 
   const renewalPrice = Number(form.elements.renewalPrice.value);
   if (subscription.frequency === 'yearly' && renewalPrice > 0 && renewalPrice !== subscription.price) {
@@ -1536,14 +1860,23 @@ function handleSubmit(event) {
   render();
 }
 
-// מוחק מנוי אחרי שהמשתמש מאשר
-async function deleteSubscription(sub) {
-  if (!(await askConfirm(`למחוק את "${isolate(sub.name)}"?`, 'מחיקה', true))) return;
+// מוחק מנוי מיד, ומציג הודעה עם כפתור "ביטול" שמחזיר אותו
+function deleteSubscription(sub) {
+  const subscriptions = loadSubscriptions();
+  const deleted = subscriptions.find((s) => s.id === sub.id);
+  if (!deleted) return;
 
-  const remaining = loadSubscriptions().filter((s) => s.id !== sub.id);
-  saveSubscriptions(remaining);
+  saveSubscriptions(subscriptions.filter((s) => s.id !== sub.id));
   render();
-  showToast(`"${isolate(sub.name)}" נמחק`);
+
+  showToast(`"${isolate(sub.name)}" נמחק`, 'ביטול', () => {
+    // מחזירים את המנוי בדיוק כמו שהיה (אם לא הוחזר כבר)
+    const current = loadSubscriptions();
+    if (current.some((s) => s.id === deleted.id)) return;
+    saveSubscriptions([...current, deleted]);
+    render();
+    showToast(`"${isolate(deleted.name)}" שוחזר`);
+  });
 }
 
 // ===== חלון ההגדרות =====
@@ -1561,7 +1894,8 @@ function openSettings() {
   fields.budget.value = settings.budget > 0 ? settings.budget : '';
 
   // עובדים על עותק של הקטגוריות, כדי ש"ביטול" לא ישנה כלום
-  draftCategories = settings.categories.map((category) => ({ ...category }));
+  // original = השם המקורי, כדי לדעת אם שינו את השם ולעדכן את המנויים בהתאם
+  draftCategories = settings.categories.map((category) => ({ ...category, original: category.name }));
   newCategoryInput.value = '';
   renderCategoryEditor();
 
@@ -1598,9 +1932,30 @@ function renderCategoryEditor() {
     const row = document.createElement('li');
     row.className = 'category-row';
 
-    const name = document.createElement('span');
-    name.className = 'category-row-name';
-    name.textContent = isolate(category.name);
+    // שם הקטגוריה הוא שדה שאפשר לערוך. השינוי נשמר בלחיצה על "שמירה" בחלון
+    const name = document.createElement('input');
+    name.type = 'text';
+    name.className = 'category-row-input';
+    name.value = category.name;
+    name.maxLength = 20;
+    name.setAttribute('aria-label', `שם הקטגוריה ${category.name}`);
+    name.addEventListener('change', () => {
+      const newName = name.value.trim();
+      const taken = draftCategories.some((c, i) => i !== index && c.name === newName);
+      if (!newName || taken) {
+        showToast(newName ? 'כבר יש קטגוריה בשם הזה' : 'לקטגוריה צריך שם');
+        name.value = draftCategories[index].name;
+        return;
+      }
+      draftCategories[index].name = newName;
+    });
+    // Enter בשדה מסיים את העריכה (במקום לשמור את כל ההגדרות)
+    name.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        name.blur();
+      }
+    });
 
     // בחירת צבע: כפתור רדיו לכל גוון
     const picker = document.createElement('div');
@@ -1665,7 +2020,7 @@ function addDraftCategory() {
 // מוחק קטגוריה מעותק העבודה. אם יש לה מנויים, שואלים קודם
 async function deleteDraftCategory(index) {
   const category = draftCategories[index];
-  const inUse = loadSubscriptions().filter((sub) => sub.category === category.name).length;
+  const inUse = loadSubscriptions().filter((sub) => sub.category === (category.original || category.name)).length;
 
   if (inUse > 0) {
     const who = inUse === 1 ? 'למנוי אחד' : `ל-${inUse} מנויים`;
@@ -1685,14 +2040,25 @@ async function deleteDraftCategory(index) {
 function handleSettingsSubmit(event) {
   event.preventDefault();
 
-  const newSettings = readSettingsForm();
+  // קטגוריות ששינו להן שם: מהשם הישן לחדש
+  const renames = new Map(
+    draftCategories
+      .filter((category) => category.original && category.original !== category.name)
+      .map((category) => [category.original, category.name])
+  );
 
-  // מנויים שהקטגוריה שלהם נמחקה נשארים בלי קטגוריה
+  const newSettings = readSettingsForm();
   const keptNames = new Set(newSettings.categories.map((category) => category.name));
   const subscriptions = loadSubscriptions();
   let changed = false;
 
   for (const sub of subscriptions) {
+    // שם שהשתנה: המנוי עובר לשם החדש
+    if (renames.has(sub.category)) {
+      sub.category = renames.get(sub.category);
+      changed = true;
+    }
+    // קטגוריה שנמחקה: המנוי נשאר בלי קטגוריה
     if (sub.category && !keptNames.has(sub.category)) {
       sub.category = '';
       changed = true;
@@ -1797,6 +2163,19 @@ function cleanSubscription(item) {
     example: item.example === true,
     renewalPrice: Number(item.renewalPrice) > 0 ? Number(item.renewalPrice) : 0,
     renewDecision: RENEW_DECISIONS.includes(item.renewDecision) ? item.renewDecision : '',
+    trial: item.trial === true,
+    priceHistory: Array.isArray(item.priceHistory)
+      ? item.priceHistory
+          .filter(
+            (entry) =>
+              entry &&
+              typeof entry.date === 'string' &&
+              /^\d{4}-\d{2}-\d{2}$/.test(entry.date) &&
+              Number(entry.price) > 0
+          )
+          .map((entry) => ({ date: entry.date, price: Number(entry.price) }))
+          .slice(-10)
+      : [],
   };
 }
 
@@ -1897,6 +2276,7 @@ const EXAMPLE_ROWS = [
   ['Netflix', 54.9, 'monthly', 2, 'בידור', 'tv', false, 'חשבון משפחתי'],
   ['Spotify', 21.9, 'monthly', 5, 'בידור', 'music', false, ''],
   ['Disney+', 34.9, 'monthly', 7, 'בידור', 'tv', false, ''],
+  ['Apple TV+', 29.9, 'monthly', 4, 'בידור', 'film', false, 'ניסיון חינם לשבוע', 0, true],
   ['iCloud', 12.9, 'monthly', 9, 'תוכנה', 'cloud', false, ''],
   ['אפליקציית מדיטציה', 39.9, 'monthly', 12, 'בריאות', 'heart', true, ''],
   ['חדר כושר', 189, 'monthly', 16, 'בריאות', 'activity', false, ''],
@@ -1909,8 +2289,8 @@ const EXAMPLE_ROWS = [
 
 // בונה את מנויי הדוגמה. התאריכים מחושבים מהיום, כדי שתמיד יהיו חיובים קרובים
 function buildExamples() {
-  // העמודה האחרונה (לא חובה) היא מחיר בחידוש
-  return EXAMPLE_ROWS.map(([name, price, frequency, inDays, category, icon, rarelyUsed, notes, renewalPrice = 0]) => {
+  // שתי העמודות האחרונות (לא חובה): מחיר בחידוש, והאם זו תקופת ניסיון
+  return EXAMPLE_ROWS.map(([name, price, frequency, inDays, category, icon, rarelyUsed, notes, renewalPrice = 0, trial = false]) => {
     const nextDate = daysFromToday(inDays);
     return {
       id: crypto.randomUUID(),
@@ -1925,6 +2305,9 @@ function buildExamples() {
       notes,
       renewalPrice,
       renewDecision: '',
+      trial,
+      // Spotify בדוגמה "התייקר" לפני חודשיים, כדי להראות את המעקב אחרי מחירים
+      priceHistory: name === 'Spotify' ? [{ date: daysFromToday(-60), price: 19.9 }] : [],
       example: true,
     };
   });
@@ -2031,7 +2414,7 @@ function renderGuideProgress() {
 
   const total = guideSteps.length;
   guideProgressText.textContent =
-    doneCount === total ? `סיימת את כל ${total} השלבים. כל הכבוד!` : `סיימת ${doneCount} מתוך ${total} שלבים`;
+    doneCount === total ? `הושלמו כל ${total} השלבים` : `סיימת ${doneCount} מתוך ${total} שלבים`;
   guideProgressFill.style.width = `${(doneCount / total) * 100}%`;
   guideResetButton.hidden = doneCount === 0;
 }
@@ -2133,12 +2516,21 @@ document.getElementById('clear-examples').addEventListener('click', clearExample
 document.getElementById('add-button').addEventListener('click', () => openForm());
 document.getElementById('cancel-button').addEventListener('click', () => dialog.close());
 form.addEventListener('submit', handleSubmit);
+
+// חיפוש: מציירים מחדש בכל הקלדה. מיון: שומרים את הבחירה ומציירים מחדש
+searchInput.addEventListener('input', render);
+sortSelect.value = loadSort();
+sortSelect.addEventListener('change', () => {
+  try {
+    localStorage.setItem(SORT_KEY, sortSelect.value);
+  } catch (error) {}
+  render();
+});
 form.addEventListener('change', (event) => {
   if (event.target.name === 'frequency') updateRenewalField();
+  if (event.target.name === 'trial') updateDateLabel();
 });
-document.getElementById('renewal-alert-button').addEventListener('click', () => {
-  renewalsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+document.getElementById('renewal-alert-button').addEventListener('click', () => showPage('renewals'));
 form.elements.category.addEventListener('input', updateIconPickerTone);
 form.elements.name.addEventListener('input', updateNoIconLetter);
 
@@ -2176,8 +2568,58 @@ new MutationObserver(() => applyAppearance(settings)).observe(document.documentE
   attributeFilter: ['data-theme'],
 });
 
+// ===== מעבר בין דפים (התפריט התחתון) =====
+
+const PAGES = ['home', 'subs', 'renewals', 'savings', 'more'];
+const pageSections = [...document.querySelectorAll('.page')];
+const tabButtons = [...document.querySelectorAll('.tab')];
+
+// מציג דף אחד ומסתיר את השאר. גם מסמן את הלשונית הפעילה בתפריט.
+// שם הדף נכתב בכתובת (למשל ...#subs), כך שכפתור "חזרה" בדפדפן חוזר לדף הקודם
+function showPage(name, updateAddress = true) {
+  const page = PAGES.includes(name) ? name : 'home';
+
+  for (const section of pageSections) {
+    section.hidden = section.dataset.page !== page;
+  }
+
+  for (const tab of tabButtons) {
+    const active = tab.dataset.page === page;
+    tab.classList.toggle('active', active);
+    if (active) tab.setAttribute('aria-current', 'page');
+    else tab.removeAttribute('aria-current');
+  }
+
+  if (updateAddress && location.hash !== `#${page}`) {
+    try {
+      location.hash = page;
+    } catch (error) {}
+  }
+
+  window.scrollTo(0, 0);
+}
+
+// הדף שכתוב בכתובת, או דף הבית אם אין
+function pageFromAddress() {
+  const name = location.hash.slice(1);
+  return PAGES.includes(name) ? name : 'home';
+}
+
+for (const tab of tabButtons) {
+  tab.addEventListener('click', () => showPage(tab.dataset.page));
+}
+
+// כפתור "חזרה" או "קדימה" בדפדפן משנה את הכתובת, ואז מציגים את הדף שבה
+window.addEventListener('hashchange', () => showPage(pageFromAddress(), false));
+
+// כפתורים בדפים שפותחים חלונות
+document.getElementById('empty-add-button').addEventListener('click', () => openForm());
+document.getElementById('more-guide').addEventListener('click', openGuide);
+document.getElementById('more-settings').addEventListener('click', openSettings);
+
 // ===== הפעלה ראשונה =====
 applyAppearance(settings);
+showPage(pageFromAddress(), false);
 buildIconPicker();
 
 // בגרסה שמוצגת כקישור (אבטיפוס), מי שנכנס בפעם הראשונה רואה נתוני דוגמה.
