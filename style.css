@@ -681,6 +681,11 @@ h1 {
   padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
 
+/* שם האפליקציה בראש תפריט הצד. בטלפון ובטאבלט הוא מוסתר */
+.tab-bar-brand {
+  display: none;
+}
+
 .tab-bar-inner {
   max-width: 640px;
   margin: 0 auto;
@@ -2336,5 +2341,196 @@ input[type="checkbox"] {
   dialog[open]::backdrop {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* ===== מסך רחב (מחשב): תפריט צד, ופריסה בשתי עמודות ===== */
+/* מ-960 פיקסלים ומעלה. בטלפון ובטאבלט כל מה שכאן לא חל */
+@media (min-width: 960px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+
+  /* מקום לתפריט הצד, שנמצא בצד ימין */
+  body {
+    padding-right: var(--sidebar-width);
+  }
+
+  .container {
+    max-width: 1080px;
+    padding-block: 32px 48px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  /* התפריט התחתון הופך לתפריט צד: צמוד לימין, לכל הגובה */
+  .tab-bar {
+    inset: 0 0 0 auto;
+    width: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 16px;
+    border-top: none;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .tab-bar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .brand-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: var(--primary-text);
+  }
+
+  .tab-bar-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: none;
+    margin: 0;
+  }
+
+  /* כל לשונית: אייקון ושם בשורה אחת */
+  .tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+  }
+
+  .tab:hover {
+    background: var(--surface-soft);
+  }
+
+  .tab.active {
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  }
+
+  /* הקו של הלשונית הפעילה עובר מלמעלה לצד */
+  .tab.active::before {
+    top: 8px;
+    bottom: 8px;
+    inset-inline: auto;
+    inset-inline-start: 0;
+    width: 3px;
+    height: auto;
+    border-radius: 3px 0 0 3px;
+  }
+
+  /* המספר של החידושים: בסוף השורה, ליד השם */
+  .tab-badge {
+    position: static;
+    margin-inline-start: auto;
+  }
+
+  /* ההודעה הקצרה: באמצע אזור התוכן, לא מתחת לתפריט */
+  .toast {
+    inset: auto var(--sidebar-width) 24px 0;
+  }
+
+  /* --- בית: כרטיס ההוצאה מימין, התזכורות משמאל --- */
+  .page[data-page="home"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .page[data-page="home"] > :not(.hero) {
+    grid-column: 2;
+  }
+
+  .page[data-page="home"] > .hero {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .page[data-page="home"] > .empty {
+    grid-column: 1 / -1;
+  }
+
+  /* --- מנויים: כפתור ההוספה לא נמתח לכל הרוחב --- */
+  .page[data-page="subs"] > .button.full {
+    width: auto;
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  /* --- חידושים: כרטיסים בשתי עמודות --- */
+  .renewals-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  /* --- חיסכון: הגרף והתובנות זה לצד זה, ההצעות והמחשבון זה לצד זה --- */
+  .page[data-page="savings"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .page[data-page="savings"] > .chart-section {
+    grid-column: 1;
+    margin-bottom: 0;
+  }
+
+  .page[data-page="savings"] > .insights {
+    grid-column: 2;
+  }
+
+  .page[data-page="savings"] > .savings,
+  .page[data-page="savings"] > .page-empty {
+    grid-column: 1 / -1;
+  }
+
+  .savings {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .savings > .section-title {
+    grid-column: 1 / -1;
+  }
+
+  .savings .whatif {
+    margin-top: 0;
+  }
+
+  /* --- עוד: התפריט והגיבוי זה לצד זה --- */
+  .page[data-page="more"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px 24px;
+    align-items: start;
+  }
+
+  .page[data-page="more"] > .section-title {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .page[data-page="more"] > .menu-list,
+  .page[data-page="more"] > .backup {
+    margin-top: 0;
   }
 }
