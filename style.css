@@ -158,7 +158,8 @@ body {
   max-width: 640px;
   margin: 0 auto;
   /* למטה משאירים מקום לתפריט התחתון, כדי שלא יסתיר את סוף הדף */
-  padding-block: 24px calc(96px + env(safe-area-inset-bottom, 0px));
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   /* לפחות 16px בכל צד, ויותר אם יש פס מערכת בצד המסך (בטלפון לרוחב) */
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -673,10 +674,14 @@ h1 {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 20;
-  background: var(--surface);
+  /* רקע כמעט אטום, שמטשטש מעט את מה שגולל מתחתיו */
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
   border-top: 1px solid var(--border);
-  /* מקום לפס הבית בטלפון, ולפס מערכת בצדדים */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-top: 8px;
+  /* מרווח מלמטה: לפחות 14px, ובאייפון עם פס בית - כגובה הפס ועוד קצת */
+  padding-bottom: max(14px, calc(env(safe-area-inset-bottom, 0px) + 4px));
   padding-left: max(8px, env(safe-area-inset-left, 0px));
   padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
@@ -702,14 +707,25 @@ h1 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  min-height: 60px;
-  padding: 6px 2px;
+  gap: 4px;
+  min-height: 56px;
+  padding: 0 2px;
   border: none;
   background: none;
   color: var(--muted);
   cursor: pointer;
   transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* האייקון יושב בתוך "גלולה" שמקבלת צבע כשהלשונית פעילה */
+.tab svg {
+  box-sizing: content-box;
+  width: 22px;
+  height: 22px;
+  padding: 4px 18px;
+  border-radius: 999px;
+  transition: background-color 0.2s;
 }
 
 .tab:hover {
@@ -722,21 +738,23 @@ h1 {
   font-weight: 600;
 }
 
+.tab.active svg {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+/* קו שמסמן את הלשונית הפעילה: רק בתפריט הצד במסך רחב */
 .tab.active::before {
   content: "";
+  display: none;
   position: absolute;
-  top: 0;
-  inset-inline: 28%;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
   background: var(--primary);
 }
 
 /* מספר קטן על הלשונית (חידושים שמתקרבים) */
 .tab-badge {
   position: absolute;
-  top: 5px;
-  left: calc(50% + 5px);
+  top: -4px;
+  left: calc(50% + 8px);
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -1717,7 +1735,7 @@ input[type="number"]::-webkit-outer-spin-button {
 /* popover מציג אותה מעל הכול, גם מעל חלון פתוח */
 .toast {
   position: fixed;
-  inset: auto 0 calc(80px + env(safe-area-inset-bottom, 0px));
+  inset: auto 0 calc(92px + env(safe-area-inset-bottom, 0px));
   margin: 0 auto;
   width: max-content;
   max-width: calc(100% - 32px);
@@ -2424,6 +2442,7 @@ input[type="checkbox"] {
 
   /* הקו של הלשונית הפעילה עובר מלמעלה לצד */
   .tab.active::before {
+    display: block;
     top: 8px;
     bottom: 8px;
     inset-inline: auto;
@@ -2431,6 +2450,14 @@ input[type="checkbox"] {
     width: 3px;
     height: auto;
     border-radius: 3px 0 0 3px;
+  }
+
+  .tab svg {
+    padding: 0;
+  }
+
+  .tab.active svg {
+    background: none;
   }
 
   /* המספר של החידושים: בסוף השורה, ליד השם */
