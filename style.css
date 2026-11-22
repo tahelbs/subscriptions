@@ -139,6 +139,93 @@
   box-sizing: border-box;
 }
 
+/* ===== תחושה של אפליקציה ===== */
+html {
+  /* הטלפון לא מגדיל טקסט לבד כשמסובבים את המסך */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* בלי זום בהקשה כפולה, ולחיצות מגיבות מיד */
+  touch-action: manipulation;
+  /* גלילה חלקה כשהאפליקציה גוללת בעצמה (למשל לראש הדף) */
+  scroll-behavior: smooth;
+  /* מקום קבוע לפס הגלילה במחשב, כדי שהדף לא "יקפוץ" כשחלון נפתח */
+  scrollbar-gutter: stable;
+}
+
+/* כשחלון פתוח, הדף שמאחוריו לא נגלל */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* בלי ההבהוב האפור של הדפדפן בלחיצה: לכל דבר לחיץ יש אפקט לחיצה משלו */
+button,
+summary,
+label,
+.tappable,
+.card {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* טקסט של כפתורים ותפריטים לא מסומן בטעות בלחיצה ארוכה */
+button,
+summary,
+.tab-bar,
+.chip,
+.segmented,
+.sheet-handle,
+.swatch,
+.icon-option,
+.tone-choice {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* אפקט לחיצה (במקום מעבר עכבר, שאין בטלפון) */
+.card:active,
+.menu-item:active {
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+
+.chip:active,
+.pill-button:active,
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+.chip,
+.pill-button,
+.icon-button {
+  transition: transform 0.1s, background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.tab:active svg {
+  transform: scale(0.9);
+}
+
+.tab svg {
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+/* שורות וכרטיסים לחיצים (פותחים עריכה או סינון) */
+.tappable {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.tappable:active {
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+/* בתוך כרטיס הסיכום הכהה: אפקט לחיצה בהיר */
+.breakdown-row.tappable:active {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* מעבר בין דפים: הדף החדש מופיע ברכות */
+.page:not([hidden]) {
+  animation: page-in 0.2s ease-out;
+}
+
 /* אלמנט עם המאפיין hidden תמיד מוסתר, גם אם יש לו display אחר ב-CSS */
 [hidden] {
   display: none !important;
@@ -224,8 +311,10 @@ body {
   transition: background-color 0.15s;
 }
 
-.pill-button:hover {
-  background: var(--surface-soft);
+@media (hover: hover) {
+  .pill-button:hover {
+    background: var(--surface-soft);
+  }
 }
 
 .pill-button svg {
@@ -531,8 +620,10 @@ h1 {
   transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
 }
 
-.button:hover {
-  background: var(--surface-soft);
+@media (hover: hover) {
+  .button:hover {
+    background: var(--surface-soft);
+  }
 }
 
 .button:active {
@@ -546,9 +637,11 @@ h1 {
   font-weight: 600;
 }
 
-.button.primary:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+@media (hover: hover) {
+  .button.primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
 }
 
 .button.full {
@@ -571,13 +664,17 @@ h1 {
   transition: background-color 0.15s, color 0.15s;
 }
 
-.icon-button:hover {
-  background: var(--surface-soft);
-  color: var(--text);
+@media (hover: hover) {
+  .icon-button:hover {
+    background: var(--surface-soft);
+    color: var(--text);
+  }
 }
 
-.icon-button.danger:hover {
-  color: var(--danger);
+@media (hover: hover) {
+  .icon-button.danger:hover {
+    color: var(--danger);
+  }
 }
 
 /* ===== סינון לפי קטגוריה ===== */
@@ -588,6 +685,7 @@ h1 {
   margin: 20px -16px 0;
   padding: 2px 16px 6px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scrollbar-width: none; /* מסתיר את פס הגלילה (Firefox) */
 }
 
@@ -613,8 +711,10 @@ h1 {
   transition: background-color 0.15s, border-color 0.15s;
 }
 
-.chip:hover {
-  border-color: var(--muted);
+@media (hover: hover) {
+  .chip:hover {
+    border-color: var(--muted);
+  }
 }
 
 /* נקודת הצבע של הקטגוריה */
@@ -728,8 +828,10 @@ h1 {
   transition: background-color 0.2s;
 }
 
-.tab:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--text);
+  }
 }
 
 /* הלשונית של הדף הפתוח: בצבע האתר, עם קו קטן מעליה */
@@ -797,8 +899,10 @@ h1 {
   cursor: pointer;
 }
 
-.menu-item:hover {
-  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+@media (hover: hover) {
+  .menu-item:hover {
+    background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+  }
 }
 
 .menu-icon {
@@ -917,8 +1021,10 @@ h1 {
   transition: background-color 0.15s;
 }
 
-.card:hover {
-  background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+@media (hover: hover) {
+  .card:hover {
+    background: color-mix(in srgb, var(--primary) 4%, var(--surface));
+  }
 }
 
 .avatar {
@@ -1210,9 +1316,11 @@ h1 {
   border-color: transparent;
 }
 
-.backup-actions .button:hover {
-  background: var(--surface);
-  border-color: var(--border);
+@media (hover: hover) {
+  .backup-actions .button:hover {
+    background: var(--surface);
+    border-color: var(--border);
+  }
 }
 
 /* ===== חלון הטופס ===== */
@@ -1226,6 +1334,7 @@ dialog {
   color: var(--text);
   box-shadow: 0 24px 60px rgba(40, 20, 10, 0.3);
   overflow-y: auto; /* טופס ארוך נגלל בתוך החלון */
+  overscroll-behavior: contain; /* בסוף הגלילה בחלון, הדף שמאחור לא זז */
 }
 
 dialog::backdrop {
@@ -1272,17 +1381,48 @@ dialog h2 {
 
   dialog form,
   .dialog-body {
-    /* מקום גם לפס הבית של הטלפון בתחתית המסך */
-    padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
+  /* טלפונים עושים זום לשדה עם טקסט קטן מ-16px. כאן הטקסט נשאר 16 */
+  dialog .code-box {
+    font-size: 16px;
+  }
+
+  /* הכפתורים בתחתית החלון: מקום מתחתם לפס הבית של הטלפון */
+  dialog .form-actions {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* הידית בראש החלון: פס רחב שנשאר למעלה גם כשגוללים בחלון.
+     גוררים אותו למטה כדי לסגור (הקוד ב-app.js, בפונקציה enableSheetDrag) */
   .sheet-handle {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    /* נמתח לכל רוחב החלון, מעל הריווח של התוכן */
+    margin: -22px -20px 8px;
+    padding: 10px 0 14px;
+    background: var(--surface);
+    cursor: grab;
+    /* בזמן גרירה הדפדפן לא גולל את הדף */
+    touch-action: none;
+  }
+
+  /* הפס האפור הקטן עצמו */
+  .sheet-handle::before {
+    content: "";
     display: block;
     width: 40px;
     height: 5px;
+    margin: 0 auto;
     border-radius: 3px;
     background: var(--border);
-    margin: -8px auto 14px;
+  }
+
+  .sheet-handle:active {
+    cursor: grabbing;
   }
 }
 
@@ -1482,8 +1622,10 @@ input[type="number"]::-webkit-outer-spin-button {
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.icon-option:hover span {
-  color: var(--text);
+@media (hover: hover) {
+  .icon-option:hover span {
+    color: var(--text);
+  }
 }
 
 .icon-option input:checked + span {
@@ -1715,9 +1857,11 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 600;
 }
 
-.button.danger-fill:hover {
-  background: var(--danger);
-  filter: brightness(0.92);
+@media (hover: hover) {
+  .button.danger-fill:hover {
+    background: var(--danger);
+    filter: brightness(0.92);
+  }
 }
 
 /* ===== חלון אישור ===== */
@@ -2168,8 +2312,10 @@ input[type="number"]::-webkit-outer-spin-button {
   cursor: pointer;
 }
 
-.text-button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .text-button:hover {
+    color: var(--text);
+  }
 }
 
 .guide-steps {
@@ -2343,6 +2489,11 @@ input[type="checkbox"] {
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to   { transform: none; }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes fade-in {

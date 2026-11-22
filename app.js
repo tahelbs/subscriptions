@@ -126,6 +126,26 @@ function isolate(text) {
   return `\u2068${text}\u2069`;
 }
 
+// ===== אלמנטים לחיצים =====
+
+// הופך שורה או כרטיס ללחיצים: לחיצה (או Enter ורווח במקלדת) מפעילה פעולה.
+// לחיצה על כפתור או על בחירה בתוך האלמנט לא מפעילה את הפעולה הכללית
+function makeTappable(element, action) {
+  element.classList.add('tappable');
+  element.tabIndex = 0;
+  element.addEventListener('click', (event) => {
+    if (event.target.closest('button, input, label, a, select')) return;
+    action();
+  });
+  element.addEventListener('keydown', (event) => {
+    if (event.target !== element) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
+  });
+}
+
 // ===== מחירים =====
 
 // כלים לעיצוב מחירים בשקלים: אחד למספר שלם (‏30 ₪) ואחד לאגורות (‏29.90 ₪)
@@ -829,6 +849,7 @@ function createBreakdownGroup(title, subscriptions, sumText) {
 function createBreakdownRow(sub) {
   const row = document.createElement('li');
   row.className = 'breakdown-row';
+  makeTappable(row, () => openForm(sub));
 
   const main = document.createElement('div');
   main.className = 'breakdown-main';
@@ -1000,6 +1021,7 @@ function renderUpcoming(subscriptions) {
     price.textContent = formatPrice(nextChargeAmount(sub));
 
     item.append(name, price);
+    makeTappable(item, () => openForm(sub));
     upcomingList.appendChild(item);
 
     // כאן סוכמים את המחיר המלא, כי זה הסכום שבאמת יירד מהחשבון
@@ -1172,6 +1194,7 @@ function renderRenewalAlert(subscriptions) {
       if (sub.renewalPrice > sub.price) text += ` (המחיר עולה מ-${formatPrice(sub.price)})`;
       item.textContent = text;
     }
+    makeTappable(item, () => openForm(sub));
     renewalAlertList.appendChild(item);
   }
 }
@@ -1194,6 +1217,7 @@ function renderTrialAlert(subscriptions) {
     item.textContent =
       `${isolate(sub.name)}: הניסיון נגמר ${describeRelative(sub.nextDate)}, ` +
       `ואז ${formatPrice(sub.price)} ${frequencyOf(sub).per}. לא צריך? לבטל לפני ${shortDate(sub.nextDate)}`;
+    makeTappable(item, () => openForm(sub));
     trialAlertList.appendChild(item);
   }
 }
@@ -1245,6 +1269,12 @@ function renderChart(paying) {
     bar.appendChild(fill);
 
     item.append(labels, bar);
+    // לחיצה על קטגוריה: עוברים לדף המנויים, מסוננים לקטגוריה הזו
+    makeTappable(item, () => {
+      selectedCategory = category;
+      render();
+      showPage('subs');
+    });
     chartList.appendChild(item);
   }
 }
@@ -1358,6 +1388,7 @@ function createRenewalItem(sub) {
     choices.appendChild(option);
   }
   item.appendChild(choices);
+  makeTappable(item, () => openForm(sub));
 
   return item;
 }
@@ -2576,8 +2607,16 @@ const tabButtons = [...document.querySelectorAll('.tab')];
 
 // מציג דף אחד ומסתיר את השאר. גם מסמן את הלשונית הפעילה בתפריט.
 // שם הדף נכתב בכתובת (למשל ...#subs), כך שכפתור "חזרה" בדפדפן חוזר לדף הקודם
+// כמה גללו בכל דף, כדי לחזור לאותו מקום כשחוזרים לדף (כמו באפליקציות)
+const pageScroll = {};
+let currentPage = null;
+
 function showPage(name, updateAddress = true) {
   const page = PAGES.includes(name) ? name : 'home';
+  if (page === currentPage) return;
+
+  if (currentPage) pageScroll[currentPage] = window.scrollY;
+  currentPage = page;
 
   for (const section of pageSections) {
     section.hidden = section.dataset.page !== page;
@@ -2596,7 +2635,8 @@ function showPage(name, updateAddress = true) {
     } catch (error) {}
   }
 
-  window.scrollTo(0, 0);
+  // חוזרים למקום שבו היינו בדף הזה (או לראש הדף, בפעם הראשונה)
+  window.scrollTo({ top: pageScroll[page] || 0, behavior: 'instant' });
 }
 
 // הדף שכתוב בכתובת, או דף הבית אם אין
@@ -2606,7 +2646,14 @@ function pageFromAddress() {
 }
 
 for (const tab of tabButtons) {
-  tab.addEventListener('click', () => showPage(tab.dataset.page));
+  tab.addEventListener('click', () => {
+    // לחיצה על הלשונית של הדף הפתוח גוללת לראש הדף
+    if (tab.dataset.page === currentPage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      showPage(tab.dataset.page);
+    }
+  });
 }
 
 // כפתור "חזרה" או "קדימה" בדפדפן משנה את הכתובת, ואז מציגים את הדף שבה
@@ -2624,6 +2671,70 @@ document.getElementById('more-settings').addEventListener('click', openSettings)
 if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.RUNNING_AS_PROTOTYPE) {
   navigator.serviceWorker.register('sw.js').catch((error) => {
     console.warn('לא הצלחתי להפעיל עבודה בלי אינטרנט', error);
+  });
+}
+
+// ===== סגירת חלונות בטלפון: גרירה למטה, או לחיצה מחוץ לחלון =====
+
+const phoneScreen = window.matchMedia('(max-width: 599px)');
+
+// גרירה של הפס האפור בראש החלון למטה סוגרת אותו (כמו באפליקציות).
+// גרירה קצרה מחזירה את החלון למקום
+function enableSheetDrag(sheet) {
+  const handle = sheet.querySelector('.sheet-handle');
+  if (!handle) return;
+
+  let startY = 0;
+  let distance = 0;
+  let startTime = 0;
+  let dragging = false;
+
+  handle.addEventListener('pointerdown', (event) => {
+    if (!phoneScreen.matches) return;
+    dragging = true;
+    startY = event.clientY;
+    distance = 0;
+    startTime = Date.now();
+    handle.setPointerCapture(event.pointerId);
+    sheet.style.transition = 'none';
+  });
+
+  handle.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    // רק למטה: גרירה למעלה לא מזיזה את החלון
+    distance = Math.max(0, event.clientY - startY);
+    sheet.style.transform = `translateY(${distance}px)`;
+  });
+
+  function finishDrag() {
+    if (!dragging) return;
+    dragging = false;
+
+    // נסגר אם גררו מספיק רחוק, או החליקו מהר למטה
+    const speed = distance / Math.max(Date.now() - startTime, 1);
+    const shouldClose = distance > 120 || (distance > 40 && speed > 0.5);
+
+    sheet.style.transition = 'transform 0.2s ease-out';
+    sheet.style.transform = shouldClose ? 'translateY(100%)' : '';
+
+    setTimeout(() => {
+      if (shouldClose) sheet.close();
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+    }, 200);
+  }
+
+  handle.addEventListener('pointerup', finishDrag);
+  handle.addEventListener('pointercancel', finishDrag);
+}
+
+for (const sheet of document.querySelectorAll('dialog')) {
+  enableSheetDrag(sheet);
+
+  // לחיצה על האזור הכהה מחוץ לחלון סוגרת אותו.
+  // (לחיצה שם נרשמת על ה-dialog עצמו, כי התוכן ממלא את כל החלון)
+  sheet.addEventListener('click', (event) => {
+    if (event.target === sheet) sheet.close();
   });
 }
 
