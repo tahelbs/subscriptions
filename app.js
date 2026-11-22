@@ -2617,6 +2617,16 @@ document.getElementById('empty-add-button').addEventListener('click', () => open
 document.getElementById('more-guide').addEventListener('click', openGuide);
 document.getElementById('more-settings').addEventListener('click', openSettings);
 
+// ===== עבודה בלי אינטרנט =====
+// רושמים את sw.js, שמחזיק עותק של קבצי האפליקציה כדי שהיא תיפתח גם בלי חיבור.
+// עובד רק כשהאתר מוגש מכתובת (https, או localhost בבדיקות), לא כשפותחים את הקובץ ישירות.
+// בגרסת הקישור (אבטיפוס) מדלגים, כי שם זה לא נתמך
+if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.RUNNING_AS_PROTOTYPE) {
+  navigator.serviceWorker.register('sw.js').catch((error) => {
+    console.warn('לא הצלחתי להפעיל עבודה בלי אינטרנט', error);
+  });
+}
+
 // ===== הפעלה ראשונה =====
 applyAppearance(settings);
 showPage(pageFromAddress(), false);
